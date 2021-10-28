@@ -37,6 +37,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NSRequest = exports.API = void 0;
+// Node-fetch v.2.6.5. Supported by developers.
+var node_fetch_1 = require("node-fetch");
+// Filesystem
+var fs = require("fs");
+// Xml2js v.0.4.23
+var xml2js = require("xml2js");
 var API = /** @class */ (function () {
     /**
      * Instance must be instantiated with a user agent string. Setting a custom rate limit is optional.
@@ -130,17 +136,103 @@ var API = /** @class */ (function () {
     return API;
 }());
 exports.API = API;
-/*----------------------------*/
-// Node-fetch v.2.6.5. Supported by developers.
-var node_fetch_1 = require("node-fetch");
-// Filesystem
-var fs = require("fs");
+/*---------------------------------------------*/
+/**
+ * @author The xmLParser is based on the following written by Auralia:
+ * https://github.com/auralia/node-nsapi/blob/master/src/api.ts#L25
+ * @hidden
+ */
+var xmlParser = new xml2js.Parser({
+    charkey: "value",
+    trim: true,
+    normalizeTags: true,
+    normalize: true,
+    explicitRoot: false,
+    explicitArray: false,
+    mergeAttrs: true,
+    attrValueProcessors: [function (value) {
+            var num = Number(value);
+            if (!isNaN(num)) {
+                return num;
+            }
+            else {
+                return value;
+            }
+        }],
+    valueProcessors: [function (value) {
+            var num = Number(value);
+            if (!isNaN(num)) {
+                return num;
+            }
+            else {
+                return value;
+            }
+        }]
+});
+/**
+ * A object that is used to:
+ * - (1) Define the architecture of a https request before it sent to the API.
+ * - (2) Access and modify the response of a request.
+ * @class
+ * @example let request = await new NSRequest(api).addNation('testlandia').sendRequestAsync();
+ */
 var NSRequest = /** @class */ (function () {
     function NSRequest(API) {
         this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
         this._shards = [];
         this.API = API;
     }
+    Object.defineProperty(NSRequest.prototype, "body", {
+        /**
+         * Returns the current body located in the response of a NSRequest object.
+         */
+        get: function () {
+            // Verifies if a response has been recieved.
+            if (!this._response) {
+                throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?');
+            }
+            // Return the body of the response.
+            return this._response.body;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(NSRequest.prototype, "json", {
+        /**
+         * Returns the current JSON located in the response of a NSRequest object.
+         * A conversion to JSON beforehand is required.
+         * @example (1) let request = await new NSRequest(api).addNation('testlandia').sendRequestAsync();
+         * (2) request.convertToJSON();
+         * (3) console.log(request.json);
+         */
+        get: function () {
+            if (!this._response.json) {
+                throw new Error('No JSON found. Try convertToJsonAsync() first.');
+            }
+            return this._response.json;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(NSRequest.prototype, "shards", {
+        /**
+         * Returns the current shards of a NSRequest object as a single string or as an array of strings.
+         */
+        get: function () {
+            // Verifies if shards have been added.
+            if (!this._shards) {
+                throw new Error('No shards have been added.');
+            }
+            // If there is only a single shard, return it.
+            if (this._shards.length === 1) {
+                return this._shards[0];
+            }
+            // Returns the array of shards.
+            return this._shards;
+        },
+        enumerable: false,
+        configurable: true
+    });
     /**
      * Adds the nation to the url parameters.
      * @example addNation('Testlandia') adds 'nation=Testlandia' to the url.
@@ -201,6 +293,10 @@ var NSRequest = /** @class */ (function () {
         // Method chaining
         return this;
     };
+    /**
+     * Removes all shards from the NSRequest object and its associated URL.
+     * @example new NSRequest(api).addShards('numnations').removeShards()
+     */
     NSRequest.prototype.deleteAllShards = function () {
         this._url.searchParams.delete('q');
         this._shards.length = 0;
@@ -340,12 +436,56 @@ var NSRequest = /** @class */ (function () {
             });
         });
     };
-    NSRequest.prototype.getRawResponse = function () {
-        if (this._response) {
-            return this._response.body;
+    NSRequest.prototype.getJSON = function () {
+        if (!this._response.json) {
+            throw new Error('No JSON found. Try convertToJsonAsync() first.');
         }
-        // Method chaining
-        return this;
+        return this._response.json;
+    };
+    NSRequest.prototype.convertToJsonAsync = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, err_2;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        // Verifies if the a response has been set.
+                        if (!this._response.body) {
+                            throw new Error("No response body could be found. You can examine the response body by doing: ");
+                        }
+                        _b.label = 1;
+                    case 1:
+                        _b.trys.push([1, 3, , 4]);
+                        _a = this._response;
+                        return [4 /*yield*/, this.parseXml(this._response.body)];
+                    case 2:
+                        _a.json = _b.sent();
+                        return [3 /*break*/, 4];
+                    case 3:
+                        err_2 = _b.sent();
+                        throw new Error(err_2);
+                    case 4: 
+                    // Method chaining.
+                    return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    /**
+     * Parses XML into a JSON object.
+     * @author The xmLParser is based on the following written by Auralia:
+     * https://github.com/auralia/node-nsapi/blob/master/src/api.ts#L25
+     * @param {string} xml The XML to parse.
+     * @return data promise returning a JSON object.
+     */
+    NSRequest.prototype.parseXml = function (xml) {
+        return new Promise(function (resolve, reject) {
+            xmlParser.parseString(xml, function (err, data) {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(data);
+            });
+        });
     };
     return NSRequest;
 }());

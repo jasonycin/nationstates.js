@@ -1,3 +1,10 @@
+// Node-fetch v.2.6.5. Supported by developers.
+import fetch from 'node-fetch';
+// Filesystem
+import * as fs from "fs";
+// Xml2js v.0.4.23
+import * as xml2js from 'xml2js';
+
 export class API {
     static readonly version: string = '0.0.1-alpha';
     private readonly status: boolean = false;
@@ -85,13 +92,43 @@ export class API {
     }
 }
 
-/*----------------------------*/
+/*---------------------------------------------*/
 
-// Node-fetch v.2.6.5. Supported by developers.
-import fetch from 'node-fetch';
-// Filesystem
-import * as fs from "fs";
+/**
+ * @author The xmLParser is based on the following written by Auralia:
+ * https://github.com/auralia/node-nsapi/blob/master/src/api.ts#L25
+ * @hidden
+ */
+const xmlParser = new xml2js.Parser({
+    charkey: "value",
+    trim: true,
+    normalizeTags: true,
+    normalize: true,
+    explicitRoot: false,
+    explicitArray: false,
+    mergeAttrs: true,
+    attrValueProcessors: [(value: any) => {
+        let num = Number(value);
+        if (!isNaN(num)) {
+            return num;
+        } else {
+            return value;
+        }
+    }],
+    valueProcessors: [(value: any) => {
+        let num = Number(value);
+        if (!isNaN(num)) {
+            return num;
+        } else {
+            return value;
+        }
+    }]
+});
 
+/**
+ * Defines the layout of the response object in a NSRequest object.
+ * @interface
+ */
 export interface Response {
     unixTime: number,
     statusCode: number,
@@ -101,6 +138,13 @@ export interface Response {
     json?: any
 }
 
+/**
+ * A object that is used to:
+ * - (1) Define the architecture of a https request before it sent to the API.
+ * - (2) Access and modify the response of a request.
+ * @class
+ * @example let request = await new NSRequest(api).addNation('testlandia').sendRequestAsync();
+ */
 export class NSRequest {
     private API: API;
     public _url: URL = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
@@ -109,6 +153,51 @@ export class NSRequest {
 
     constructor(API: API) {
         this.API = API;
+    }
+
+    /**
+     * Returns the current body located in the response of a NSRequest object.
+     */
+    public get body(): string | number | boolean | object {
+        // Verifies if a response has been recieved.
+        if (!this._response) {
+            throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?')
+        }
+
+        // Return the body of the response.
+        return this._response.body;
+    }
+
+    /**
+     * Returns the current JSON located in the response of a NSRequest object.
+     * A conversion to JSON beforehand is required.
+     * @example (1) let request = await new NSRequest(api).addNation('testlandia').sendRequestAsync();
+     * (2) request.convertToJSON();
+     * (3) console.log(request.json);
+     */
+    public get json(): object {
+        if (!this._response.json) {
+            throw new Error('No JSON found. Try convertToJsonAsync() first.')
+        }
+        return this._response.json;
+    }
+
+    /**
+     * Returns the current shards of a NSRequest object as a single string or as an array of strings.
+     */
+    public get shards(): string | string[] {
+        // Verifies if shards have been added.
+        if (!this._shards) {
+            throw new Error('No shards have been added.')
+        }
+
+        // If there is only a single shard, return it.
+        if (this._shards.length === 1) {
+            return this._shards[0];
+        }
+
+        // Returns the array of shards.
+        return this._shards;
     }
 
     /**
@@ -176,6 +265,10 @@ export class NSRequest {
         return this;
     }
 
+    /**
+     * Removes all shards from the NSRequest object and its associated URL.
+     * @example new NSRequest(api).addShards('numnations').removeShards()
+     */
     public deleteAllShards(): void {
         this._url.searchParams.delete('q');
         this._shards.length = 0;
@@ -234,7 +327,7 @@ export class NSRequest {
         return this;
     }
 
-    public async sendRequestAsync() {
+    public async sendRequestAsync(): Promise<NSRequest> {
         // Check rate limit.
         await this.execRateLimit();
 
@@ -260,11 +353,46 @@ export class NSRequest {
         return this;
     }
 
-    public getRawResponse(): string | NSRequest {
-        if (this._response) {
-            return this._response.body;
+    public getJSON(): any {
+        if (!this._response.json) {
+            throw new Error('No JSON found. Try convertToJsonAsync() first.')
         }
-        // Method chaining
+        return this._response.json;
+    }
+
+    public async convertToJsonAsync(): Promise<NSRequest> {
+        // Verifies if the a response has been set.
+        if (!this._response.body) {
+            throw new Error("No response body could be found. You can examine the response body by doing: ")
+        }
+
+        // Attempts to parse the XML into a JSON object.
+        try {
+            this._response.json = await this.parseXml(this._response.body);
+        }
+        catch (err) {
+            throw new Error(err);
+        }
+
+        // Method chaining.
         return this;
+    }
+
+    /**
+     * Parses XML into a JSON object.
+     * @author The xmLParser is based on the following written by Auralia:
+     * https://github.com/auralia/node-nsapi/blob/master/src/api.ts#L25
+     * @param {string} xml The XML to parse.
+     * @return data promise returning a JSON object.
+     */
+    private parseXml(xml: string): Promise<object> {
+        return new Promise((resolve, reject) => {
+            xmlParser.parseString(xml, (err: any, data: any) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(data);
+            });
+        });
     }
 }
