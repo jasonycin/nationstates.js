@@ -1,0 +1,21 @@
+{
+  "name": "nationstates.js",
+  "version": "0.1.1",
+  "description": "UNDER DEVELOPMENT! USE AT OWN RISK: A library to interact with the NationStates API.",
+  "main": "dist/API.js",
+  "types": "dist/API.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["NationStates", "API", "Library"],
+  "author": "Heaveria",
+  "license": "CC BY-NC-ND 4.0",
+  "dependencies": {
+    "@types/node": "^16.11.6",
+    "node-fetch": "^2.6.5"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^3.0.3",
+    "typedoc": "^0.22.7"
+  }
+}
