@@ -1,4 +1,19 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -36,9 +51,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NSRequest = exports.API = void 0;
+exports.NSFunctions = exports.RequestBuilder = exports.API = void 0;
 // Node-fetch v.2.6.5. Supported by developers.
 var node_fetch_1 = require("node-fetch");
+var node_fetch_2 = require("node-fetch");
 // Filesystem
 var fs = require("fs");
 // Xml2js v.0.4.23
@@ -50,16 +66,24 @@ var API = /** @class */ (function () {
      * @param {number} rateLimit
      */
     function API(userAgent, rateLimit) {
-        this.status = false;
         this._rateLimit = 650;
-        this.status = true;
+        this._authentication = {
+            status: false,
+        };
         this.userAgent = userAgent; // Uses setter
-        // Uses setter if optional parameter was input.
+        // If optional rate limit parameter was input.
         if (rateLimit) {
+            // Uses setter if optional parameter was input.
             this.rateLimit = rateLimit;
         }
     }
     Object.defineProperty(API.prototype, "userAgent", {
+        /**
+         * Retrieves the user agent string.
+         */
+        get: function () {
+            return this._userAgent;
+        },
         /**
          * Sets the user agent. Verifies the parameter length if less than three, is alphanumeric,
          * does not end in an empty space, and is a string.
@@ -74,9 +98,11 @@ var API = /** @class */ (function () {
                 userAgent.slice(-1) === ' ' ||
                 // Data type is string.
                 typeof (userAgent) !== 'string') {
+                // Throw error.
                 throw new Error("You submitted an invalid user agent: " + userAgent);
             }
-            this._userAgent = userAgent;
+            // Set user agent.
+            this._userAgent = "User-Agent: " + userAgent + ". Using API wrapper written by Heaveria.";
         },
         enumerable: false,
         configurable: true
@@ -86,7 +112,7 @@ var API = /** @class */ (function () {
          * Returns the current rate limit as a string.
          */
         get: function () {
-            return "Current rate limit: " + this._rateLimit.toString() + "ms";
+            return this._rateLimit;
         },
         /**
          * Set the rateLimit of the instance. Verifies that the input is a number and is >= 650.
@@ -95,42 +121,64 @@ var API = /** @class */ (function () {
         set: function (ms) {
             // Check minimum rate limit and data type.
             if (ms < 650 || typeof (ms) !== 'number') {
+                // If true, throw error.
                 throw new Error("You submitted an invalid rate limit: " + ms + "ms. Must be equal to or higher than 650.");
             }
+            // Set rate limit.
             this._rateLimit = ms;
         },
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(API.prototype, "rawRateLimit", {
+    Object.defineProperty(API.prototype, "lastRequestMs", {
+        /**
+         * Returns the last request time in milliseconds.
+         */
         get: function () {
-            return this._rateLimit;
+            // Verify is the property has been set.
+            //if (!API._lastRequestMs) {
+            // Throw error.
+            //throw new Error('You have not made a request yet.');
+            //}
+            // Return the last request time.
+            return API._lastRequestMs;
         },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(API.prototype, "lastRequest", {
-        get: function () {
-            return this._lastRequestMs;
-        },
+        /**
+         * Set the time of the last request in milliseconds.
+         * @example api.lastRequestMs = Date.now();
+         * @param ms
+         */
         set: function (ms) {
+            // Data type checking and value checking
             if (typeof (ms) !== 'number' || ms <= 0) {
+                // Throw Error
                 throw new Error('Parameter must be a number.');
             }
-            this._lastRequestMs = ms;
+            // Set the last request time.
+            API._lastRequestMs = ms;
         },
         enumerable: false,
         configurable: true
     });
-    /**
-     * Returns the number of milliseconds since the last request.
-     * @private
-     */
-    API.prototype.calcMsSinceLastRequest = function () {
-        if (!this._lastRequestMs) {
-            throw new Error('A former request does not exist or has not been set.');
-        }
-        return Date.now() - this._lastRequestMs;
+    API.prototype.authenticate = function (nation, password) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = this._authentication;
+                        return [4 /*yield*/, new RequestBuilder(this)
+                                .addNation(nation)
+                                .addShards('unread')
+                                .getXPin(password)];
+                    case 1:
+                        _a._xPin =
+                            _b.sent();
+                        this._authentication.status = true;
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
     API.version = '0.0.1-alpha';
     return API;
@@ -174,34 +222,49 @@ var xmlParser = new xml2js.Parser({
  * - (1) Define the architecture of a https request before it sent to the API.
  * - (2) Access and modify the response of a request.
  * @class
- * @example let request = await new NSRequest(api).addNation('testlandia').sendRequestAsync();
+ * @example let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
  */
-var NSRequest = /** @class */ (function () {
-    function NSRequest(API) {
+var RequestBuilder = /** @class */ (function () {
+    function RequestBuilder(API) {
         this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+        this._headers = new node_fetch_1.Headers();
         this._shards = [];
         this.API = API;
+        this._headers.set('User-Agent', this.API.userAgent);
     }
-    Object.defineProperty(NSRequest.prototype, "body", {
+    Object.defineProperty(RequestBuilder.prototype, "headers", {
+        get: function () {
+            var headers = {
+                'User-Agent': this.API.userAgent
+            };
+            if (this.API._authentication.status) {
+                headers['X-Pin'] = this.API._authentication._xPin;
+            }
+            return headers;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(RequestBuilder.prototype, "body", {
         /**
-         * Returns the current body located in the response of a NSRequest object.
+         * Returns the current body located in the response of a RequestBuilder object.
          */
         get: function () {
             // Verifies if a response has been recieved.
             if (!this._response) {
                 throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?');
             }
-            // Return the body of the response.
-            return this._response.body;
+            // If the body is a number, convert the string to a number and return it. Else returns the body as is.
+            return !isNaN(this._response.body) ? this._response.body : parseInt(this._response.body);
         },
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(NSRequest.prototype, "json", {
+    Object.defineProperty(RequestBuilder.prototype, "json", {
         /**
-         * Returns the current JSON located in the response of a NSRequest object.
+         * Returns the current JSON located in the response of a RequestBuilder object.
          * A conversion to JSON beforehand is required.
-         * @example (1) let request = await new NSRequest(api).addNation('testlandia').sendRequestAsync();
+         * @example (1) let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
          * (2) request.convertToJSON();
          * (3) console.log(request.json);
          */
@@ -214,9 +277,9 @@ var NSRequest = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(NSRequest.prototype, "shards", {
+    Object.defineProperty(RequestBuilder.prototype, "shards", {
         /**
-         * Returns the current shards of a NSRequest object as a single string or as an array of strings.
+         * Returns the current shards of a RequestBuilder object as a single string or as an array of strings.
          */
         get: function () {
             // Verifies if shards have been added.
@@ -238,7 +301,7 @@ var NSRequest = /** @class */ (function () {
      * @example addNation('Testlandia') adds 'nation=Testlandia' to the url.
      * @param name - The name of the nation from which data is retrieved.
      */
-    NSRequest.prototype.addNation = function (name) {
+    RequestBuilder.prototype.addNation = function (name) {
         if ( // Minimum length
         name.length < 3 ||
             // Must be alphanumeric, or only alpha, or only numeric
@@ -253,20 +316,20 @@ var NSRequest = /** @class */ (function () {
         // Method chaining.
         return this;
     };
-    NSRequest.prototype.addRegion = function (name) {
+    RequestBuilder.prototype.addRegion = function (name) {
         this._url.searchParams.append('region', name);
         // Method chaining.
         return this;
     };
-    NSRequest.prototype.addCouncilID = function (id) {
-        if (id !== 1 || 2) {
+    RequestBuilder.prototype.addCouncilID = function (id) {
+        if (id > 2 || id < 0) {
             throw new Error('Invalid ID. 1 = GA, 2 = SC.');
         }
         this._url.searchParams.append('wa', id.toString());
         // Method chaining.
         return this;
     };
-    NSRequest.prototype.addShards = function (shards) {
+    RequestBuilder.prototype.addShards = function (shards) {
         switch (typeof (shards)) {
             // If only a single shard is given, push it to the class _shards[].
             case "string":
@@ -294,22 +357,22 @@ var NSRequest = /** @class */ (function () {
         return this;
     };
     /**
-     * Removes all shards from the NSRequest object and its associated URL.
-     * @example new NSRequest(api).addShards('numnations').removeShards()
+     * Removes all shards from the RequestBuilder object and its associated URL.
+     * @example new RequestBuilder(api).addShards('numnations').removeShards()
      */
-    NSRequest.prototype.deleteAllShards = function () {
+    RequestBuilder.prototype.deleteAllShards = function () {
         this._url.searchParams.delete('q');
         this._shards.length = 0;
     };
-    NSRequest.prototype.execRateLimit = function () {
+    RequestBuilder.prototype.execRateLimit = function () {
         return __awaiter(this, void 0, void 0, function () {
             var difference, timeToWait_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        difference = Date.now() - this.API.lastRequest;
-                        if (!(this.API.rawRateLimit > difference)) return [3 /*break*/, 2];
-                        timeToWait_1 = this.API.rawRateLimit - difference;
+                        difference = Date.now() - this.API.lastRequestMs;
+                        if (!(this.API.rateLimit > difference)) return [3 /*break*/, 2];
+                        timeToWait_1 = this.API.rateLimit - difference;
                         // Forcefully stop JavaScript execution.
                         return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, timeToWait_1); })];
                     case 1:
@@ -326,7 +389,7 @@ var NSRequest = /** @class */ (function () {
      * @example await new Request(API).downloadNationDumpAsync('./{FILENAME}.xml.gz');
      * @param pathToSaveFile
      */
-    NSRequest.prototype.downloadNationDumpAsync = function (pathToSaveFile) {
+    RequestBuilder.prototype.downloadNationDumpAsync = function (pathToSaveFile) {
         return __awaiter(this, void 0, void 0, function () {
             var res, fileStream;
             return __generator(this, function (_a) {
@@ -337,7 +400,7 @@ var NSRequest = /** @class */ (function () {
                     case 1:
                         // Check rate limit.
                         _a.sent();
-                        return [4 /*yield*/, node_fetch_1.default('https://www.nationstates.net/pages/nations.xml.gz')];
+                        return [4 /*yield*/, node_fetch_2.default('https://www.nationstates.net/pages/nations.xml.gz')];
                     case 2:
                         res = _a.sent();
                         fileStream = fs.createWriteStream(pathToSaveFile);
@@ -358,7 +421,7 @@ var NSRequest = /** @class */ (function () {
      * @example await new Request(API).downloadRegionDumpAsync('./{FILENAME}.xml.gz');
      * @param pathToSaveFile
      */
-    NSRequest.prototype.downloadRegionDumpAsync = function (pathToSaveFile) {
+    RequestBuilder.prototype.downloadRegionDumpAsync = function (pathToSaveFile) {
         return __awaiter(this, void 0, void 0, function () {
             var res, fileStream;
             return __generator(this, function (_a) {
@@ -369,9 +432,9 @@ var NSRequest = /** @class */ (function () {
                     case 1:
                         // Check rate limit.
                         _a.sent();
-                        return [4 /*yield*/, node_fetch_1.default('https://www.nationstates.net/pages/regions.xml.gz', {
+                        return [4 /*yield*/, node_fetch_2.default('https://www.nationstates.net/pages/regions.xml.gz', {
                                 headers: {
-                                    'User-Agent': "API written by Heaveria. In-use by: " + this.API._userAgent
+                                    'User-Agent': "API written by Heaveria. In-use by: " + this.API.userAgent
                                 }
                             })];
                     case 2:
@@ -389,46 +452,36 @@ var NSRequest = /** @class */ (function () {
             });
         });
     };
-    NSRequest.prototype.sendRequestAsync = function () {
+    RequestBuilder.prototype.sendRequestAsync = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var res, _a, err_1;
-            var _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var res, err_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0: 
                     // Check rate limit.
                     return [4 /*yield*/, this.execRateLimit()];
                     case 1:
                         // Check rate limit.
-                        _c.sent();
-                        _c.label = 2;
+                        _a.sent();
+                        _a.label = 2;
                     case 2:
-                        _c.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                        _a.trys.push([2, 5, , 6]);
+                        return [4 /*yield*/, node_fetch_2.default(this._url.href, {
                                 headers: {
-                                    'User-Agent': "API written by Heaveria. In-use by: " + this.API._userAgent
+                                    'User-Agent': this.API.userAgent,
                                 }
                             })];
                     case 3:
-                        res = _c.sent();
-                        // Record the unix timestamp of the request for rate limiting.
-                        this.API.lastRequest = Date.now();
-                        // Handle Response
-                        _a = this;
-                        _b = {
-                            unixTime: Date.now(),
-                            statusCode: res.status,
-                            statusBool: res.ok
-                        };
-                        return [4 /*yield*/, res.text()];
+                        res = _a.sent();
+                        // Log request and update rate limit.
+                        return [4 /*yield*/, this.logRequest(res)];
                     case 4:
-                        // Handle Response
-                        _a._response = (_b.body = _c.sent(),
-                            _b);
+                        // Log request and update rate limit.
+                        _a.sent();
                         return [3 /*break*/, 6];
                     case 5:
-                        err_1 = _c.sent();
-                        throw new Error(err_1);
+                        err_1 = _a.sent();
+                        throw new Error("Error sending request: " + err_1);
                     case 6: 
                     // Method chaining
                     return [2 /*return*/, this];
@@ -436,13 +489,40 @@ var NSRequest = /** @class */ (function () {
             });
         });
     };
-    NSRequest.prototype.getJSON = function () {
+    RequestBuilder.prototype.logRequest = function (res) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a;
+            var _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        // Record the unix timestamp of the request for rate limiting.
+                        this.API.lastRequestMs = Date.now();
+                        // Handle Response
+                        _a = this;
+                        _b = {
+                            fetchResponse: res,
+                            unixTime: Date.now(),
+                            statusCode: res.status,
+                            statusBool: res.ok
+                        };
+                        return [4 /*yield*/, res.text()];
+                    case 1:
+                        // Handle Response
+                        _a._response = (_b.body = _c.sent(),
+                            _b);
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    RequestBuilder.prototype.getJSON = function () {
         if (!this._response.json) {
             throw new Error('No JSON found. Try convertToJsonAsync() first.');
         }
         return this._response.json;
     };
-    NSRequest.prototype.convertToJsonAsync = function () {
+    RequestBuilder.prototype.convertToJsonAsync = function () {
         return __awaiter(this, void 0, void 0, function () {
             var _a, err_2;
             return __generator(this, function (_b) {
@@ -477,7 +557,7 @@ var NSRequest = /** @class */ (function () {
      * @param {string} xml The XML to parse.
      * @return data promise returning a JSON object.
      */
-    NSRequest.prototype.parseXml = function (xml) {
+    RequestBuilder.prototype.parseXml = function (xml) {
         return new Promise(function (resolve, reject) {
             xmlParser.parseString(xml, function (err, data) {
                 if (err) {
@@ -487,7 +567,119 @@ var NSRequest = /** @class */ (function () {
             });
         });
     };
-    return NSRequest;
+    RequestBuilder.prototype.getXPin = function (password) {
+        return __awaiter(this, void 0, void 0, function () {
+            var res, err_3;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // Add password to headers.
+                        this._headers.append('X-Password', password);
+                        console.log(JSON.stringify(this.headers));
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 4, , 5]);
+                        return [4 /*yield*/, node_fetch_2.default(this._url.href, {
+                                headers: JSON.stringify(this.headers)
+                            })];
+                    case 2:
+                        res = _a.sent();
+                        // Log request and update rate limit.
+                        return [4 /*yield*/, this.logRequest(res)];
+                    case 3:
+                        // Log request and update rate limit.
+                        _a.sent();
+                        // Return the x-pin header.
+                        return [2 /*return*/, res.headers.get('x-pin')];
+                    case 4:
+                        err_3 = _a.sent();
+                        // Remove the wrong password from the headers.
+                        this._headers.delete('X-Password');
+                        // Throw error.
+                        throw new Error(err_3);
+                    case 5: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    RequestBuilder.prototype.resetURL = function () {
+        this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+        this._shards = [];
+        // Method chaning
+        return this;
+    };
+    return RequestBuilder;
 }());
-exports.NSRequest = NSRequest;
+exports.RequestBuilder = RequestBuilder;
+/**
+ * As opposed to building requests manually, this class has built-in methods for easily accessing and handling
+ * common information one looks for. You do not build, send, or parse requests manually.
+ * @param { API } API The API object to enforce rate limiting and user agents.
+ */
+var NSFunctions = /** @class */ (function (_super) {
+    __extends(NSFunctions, _super);
+    function NSFunctions(api) {
+        return _super.call(this, api) || this;
+    }
+    /**
+     * Returns a boolean response, if nation1 is endorsing nation2.
+     * Does not modify the URL of the request.
+     * @param nation1 - The nation to check if it is endorsing nation2.
+     * @param nation2
+     */
+    NSFunctions.prototype.isEndorsing = function (nation1, nation2) {
+        return __awaiter(this, void 0, void 0, function () {
+            var r, endorsements, _i, endorsements_1, nation;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this
+                            .addNation(nation2)
+                            .addShards('endorsements')
+                            .sendRequestAsync()];
+                    case 1: return [4 /*yield*/, (_a.sent())
+                            .convertToJsonAsync()];
+                    case 2:
+                        r = _a.sent();
+                        endorsements = r.json['endorsements'].split(',');
+                        // Check if nation1 is endorsed by nation2.
+                        for (_i = 0, endorsements_1 = endorsements; _i < endorsements_1.length; _i++) {
+                            nation = endorsements_1[_i];
+                            // Return true if nation1 is endorsed by nation2.
+                            if (nation === nation1) {
+                                this.resetURL();
+                                return [2 /*return*/, true];
+                            }
+                        }
+                        this.resetURL();
+                        // If nation1 is not endorsed by nation2, return false.
+                        return [2 /*return*/, false];
+                }
+            });
+        });
+    };
+    NSFunctions.prototype.verify = function (nation, checksum) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // Add nation
+                        this.addNation(nation);
+                        // Adds "a=verify" to the URL parameters.
+                        this._url.searchParams.append('a', 'verify');
+                        // Adds
+                        this._url.searchParams.append('checksum', checksum);
+                        // Get response
+                        return [4 /*yield*/, this.sendRequestAsync()];
+                    case 1:
+                        // Get response
+                        _a.sent();
+                        // Return response as number.
+                        return [2 /*return*/, parseInt(this._response.body)];
+                }
+            });
+        });
+    };
+    return NSFunctions;
+}(RequestBuilder));
+exports.NSFunctions = NSFunctions;
 //# sourceMappingURL=API.js.map
