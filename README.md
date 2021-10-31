@@ -1,4 +1,4 @@
-[![CodeQL](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml)
+[![CodeQL](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml)
 # NOT RECOMMENDED FOR USE. UNDER DEVELOPMENT.
 ❌ Use at your own risk.
 
@@ -14,7 +14,7 @@ npm i nationstates.js
 ### 2. Import/Require the library
 ```TypeScript
 // For TypeScript, you should use the following import statement:
-import { API, NSRequest } from 'nationstates.js';
+import { API, RequestBuilder } from 'nationstates.js';
 
 // For standard JavaScript:
 const ns = require('nationstates.js');
@@ -32,7 +32,7 @@ const api = new API('user-Agent');
 /**
  * 2. Instate a NSRequst object.
  */
-const req1 = new NSRequest(api);
+const req1 = new RequestBuilder(api);
 ```
 
 ### 4. Build and send the request.
@@ -61,11 +61,10 @@ doStuff();
 
 ### 5. Done! See your result.
 You are responsible for traversing the result. The outcome of the above would be:
-```JSON
+```TypeScript
 {
-  id: 'testlandia',
+  id: "testlandia",
   population: 39561,
   flag: 'https://www.nationstates.net/images/flags/Iran.svg'
 }
-
 ```

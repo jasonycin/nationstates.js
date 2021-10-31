@@ -1,16 +1,32 @@
 // Node-fetch v.2.6.5. Supported by developers.
+import { Headers } from 'node-fetch';
 import fetch from 'node-fetch';
 // Filesystem
 import * as fs from "fs";
 // Xml2js v.0.4.23
 import * as xml2js from 'xml2js';
 
+/**
+ * Defines the structure of the _authentication object in the API class.
+ */
+interface Auth {
+    status: boolean,
+    _xPassword?: string,
+    _xAutoLogin?: string,
+    _xPin?: number
+}
+
+/**
+ * Required for all other classes. Defines the configuration of the library and is used to enforce rate limits and user agents.
+ */
 export class API {
     static readonly version: string = '0.0.1-alpha';
-    private readonly status: boolean = false;
-    public _userAgent: string;
+    private _userAgent: string;
     private _rateLimit: number = 650;
-    private _lastRequestMs: number;
+    private static _lastRequestMs: number;
+    public _authentication: Auth = {
+        status: false,
+    }
 
     /**
      * Instance must be instantiated with a user agent string. Setting a custom rate limit is optional.
@@ -18,13 +34,20 @@ export class API {
      * @param {number} rateLimit
      */
     constructor(userAgent: string, rateLimit?: number) {
-        this.status = true;
         this.userAgent = userAgent; // Uses setter
 
-        // Uses setter if optional parameter was input.
+        // If optional rate limit parameter was input.
         if (rateLimit) {
+            // Uses setter if optional parameter was input.
             this.rateLimit = rateLimit;
         }
+    }
+
+    /**
+     * Retrieves the user agent string.
+     */
+    get userAgent(): string {
+        return this._userAgent;
     }
 
     /**
@@ -41,19 +64,17 @@ export class API {
             userAgent.slice(-1) === ' ' ||
             // Data type is string.
             typeof (userAgent) !== 'string') {
-            throw new Error(`You submitted an invalid user agent: ${userAgent}`);
+                // Throw error.
+                throw new Error(`You submitted an invalid user agent: ${userAgent}`);
         }
-        this._userAgent = userAgent;
+        // Set user agent.
+        this._userAgent = `User-Agent: ${userAgent}. Using API wrapper written by Heaveria.`;
     }
 
     /**
      * Returns the current rate limit as a string.
      */
-    get rateLimit(): any {
-        return `Current rate limit: ${this._rateLimit.toString()}ms`;
-    }
-
-    get rawRateLimit(): number {
+    get rateLimit(): number {
         return this._rateLimit;
     }
 
@@ -64,31 +85,48 @@ export class API {
     set rateLimit(ms: number) {
         // Check minimum rate limit and data type.
         if (ms < 650 || typeof (ms) !== 'number') {
+            // If true, throw error.
             throw new Error(`You submitted an invalid rate limit: ${ms}ms. Must be equal to or higher than 650.`);
         }
+        // Set rate limit.
         this._rateLimit = ms;
     }
 
-    get lastRequest(): number {
-        return this._lastRequestMs;
-    }
-
-    set lastRequest(ms: number) {
-        if (typeof (ms) !== 'number' || ms <= 0) {
-            throw new Error('Parameter must be a number.')
-        }
-        this._lastRequestMs = ms;
+    /**
+     * Returns the last request time in milliseconds.
+     */
+    public get lastRequestMs(): number {
+        // Verify is the property has been set.
+        //if (!API._lastRequestMs) {
+            // Throw error.
+            //throw new Error('You have not made a request yet.');
+        //}
+        // Return the last request time.
+        return API._lastRequestMs;
     }
 
     /**
-     * Returns the number of milliseconds since the last request.
-     * @private
+     * Set the time of the last request in milliseconds.
+     * @example api.lastRequestMs = Date.now();
+     * @param ms
      */
-    calcMsSinceLastRequest(): number {
-        if (!this._lastRequestMs) {
-            throw new Error('A former request does not exist or has not been set.')
+    set lastRequestMs(ms: number) {
+        // Data type checking and value checking
+        if (typeof (ms) !== 'number' || ms <= 0) {
+            // Throw Error
+            throw new Error('Parameter must be a number.')
         }
-        return Date.now() - this._lastRequestMs;
+        // Set the last request time.
+        API._lastRequestMs = ms;
+    }
+
+    public async authenticate(nation: string, password: string) {
+        this._authentication._xPin =
+            await new RequestBuilder(this)
+            .addNation(nation)
+            .addShards('unread')
+            .getXPin(password)
+        this._authentication.status = true;
     }
 }
 
@@ -126,10 +164,11 @@ const xmlParser = new xml2js.Parser({
 });
 
 /**
- * Defines the layout of the response object in a NSRequest object.
+ * Defines the layout of the response object in a RequestBuilder object.
  * @interface
  */
 export interface Response {
+    fetchResponse: any,
     unixTime: number,
     statusCode: number,
     statusBool: boolean,
@@ -143,20 +182,35 @@ export interface Response {
  * - (1) Define the architecture of a https request before it sent to the API.
  * - (2) Access and modify the response of a request.
  * @class
- * @example let request = await new NSRequest(api).addNation('testlandia').sendRequestAsync();
+ * @example let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
  */
-export class NSRequest {
-    private API: API;
+export class RequestBuilder {
+    protected API: API;
     public _url: URL = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
-    private _shards: string[] = [];
+    protected _headers: Headers = new Headers();
+    protected _shards: string[] = [];
     _response: Response;
 
     constructor(API: API) {
         this.API = API;
+        this._headers.set('User-Agent', this.API.userAgent);
     }
 
+    get headers(): any {
+        let headers = {
+            'User-Agent': this.API.userAgent
+        };
+
+        if (this.API._authentication.status) {
+            headers['X-Pin'] = this.API._authentication._xPin;
+        }
+
+        return headers;
+    }
+
+
     /**
-     * Returns the current body located in the response of a NSRequest object.
+     * Returns the current body located in the response of a RequestBuilder object.
      */
     public get body(): string | number | boolean | object {
         // Verifies if a response has been recieved.
@@ -164,14 +218,14 @@ export class NSRequest {
             throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?')
         }
 
-        // Return the body of the response.
-        return this._response.body;
+        // If the body is a number, convert the string to a number and return it. Else returns the body as is.
+        return !isNaN(this._response.body) ? this._response.body : parseInt(this._response.body);
     }
 
     /**
-     * Returns the current JSON located in the response of a NSRequest object.
+     * Returns the current JSON located in the response of a RequestBuilder object.
      * A conversion to JSON beforehand is required.
-     * @example (1) let request = await new NSRequest(api).addNation('testlandia').sendRequestAsync();
+     * @example (1) let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
      * (2) request.convertToJSON();
      * (3) console.log(request.json);
      */
@@ -183,7 +237,7 @@ export class NSRequest {
     }
 
     /**
-     * Returns the current shards of a NSRequest object as a single string or as an array of strings.
+     * Returns the current shards of a RequestBuilder object as a single string or as an array of strings.
      */
     public get shards(): string | string[] {
         // Verifies if shards have been added.
@@ -214,7 +268,7 @@ export class NSRequest {
             name.slice(-1) === ' ' ||
             // Data type is string.
             typeof (name) !== 'string') {
-            throw new Error(`You submitted an invalid nation name: ${name}`);
+                throw new Error(`You submitted an invalid nation name: ${name}`);
         }
         this._url.searchParams.append('nation', name);
         // Method chaining.
@@ -228,7 +282,7 @@ export class NSRequest {
     }
 
     public addCouncilID(id: number) {
-        if (id !== 1 || 2) {
+        if (id > 2 || id < 0) {
             throw new Error('Invalid ID. 1 = GA, 2 = SC.')
         }
         this._url.searchParams.append('wa', id.toString());
@@ -236,7 +290,7 @@ export class NSRequest {
         return this;
     }
 
-    public addShards(shards: string | string[]): NSRequest {
+    public addShards(shards: string | string[]): RequestBuilder {
         switch (typeof (shards)) {
             // If only a single shard is given, push it to the class _shards[].
             case "string":
@@ -266,8 +320,8 @@ export class NSRequest {
     }
 
     /**
-     * Removes all shards from the NSRequest object and its associated URL.
-     * @example new NSRequest(api).addShards('numnations').removeShards()
+     * Removes all shards from the RequestBuilder object and its associated URL.
+     * @example new RequestBuilder(api).addShards('numnations').removeShards()
      */
     public deleteAllShards(): void {
         this._url.searchParams.delete('q');
@@ -276,12 +330,12 @@ export class NSRequest {
 
     public async execRateLimit(): Promise<void> {
         // Get difference in milliseconds between the current date and the last request sent.
-        const difference: number = Date.now() - this.API.lastRequest;
+        const difference: number = Date.now() - this.API.lastRequestMs;
 
         // If the difference exceeds the rate limit, wait for the difference.
-        if (this.API.rawRateLimit > difference) {
+        if (this.API.rateLimit > difference) {
             // Calculate the time to wait.
-            const timeToWait: number = this.API.rawRateLimit - difference;
+            const timeToWait: number = this.API.rateLimit - difference;
             // Forcefully stop JavaScript execution.
             await new Promise(resolve => setTimeout(resolve, timeToWait));
         }
@@ -295,7 +349,11 @@ export class NSRequest {
     public async downloadNationDumpAsync(pathToSaveFile: string): Promise<this> {
         // Check rate limit.
         await this.execRateLimit();
-        const res = await fetch('https://www.nationstates.net/pages/nations.xml.gz');
+        const res = await fetch('https://www.nationstates.net/pages/nations.xml.gz', {
+            headers: {
+                'User-Agent': this.API.userAgent
+            }
+        });
         const fileStream = fs.createWriteStream(pathToSaveFile);
         await new Promise((resolve, reject) => {
             res.body.pipe(fileStream);
@@ -315,7 +373,7 @@ export class NSRequest {
         await this.execRateLimit();
         const res = await fetch('https://www.nationstates.net/pages/regions.xml.gz', {
             headers: {
-                'User-Agent': `API written by Heaveria. In-use by: ${this.API._userAgent}`
+                'User-Agent': this.API.userAgent
             }
         });
         const fileStream = fs.createWriteStream(pathToSaveFile);
@@ -327,30 +385,38 @@ export class NSRequest {
         return this;
     }
 
-    public async sendRequestAsync(): Promise<NSRequest> {
+    public async sendRequestAsync(): Promise<RequestBuilder> {
         // Check rate limit.
         await this.execRateLimit();
 
         try {
+            // Send request.
             const res = await fetch(this._url.href, {
                 headers: {
-                    'User-Agent': `API written by Heaveria. In-use by: ${this.API._userAgent}`
+                    'User-Agent': this.API.userAgent,
                 }
             });
-            // Record the unix timestamp of the request for rate limiting.
-            this.API.lastRequest = Date.now();
-            // Handle Response
-            this._response = {
-                unixTime: Date.now(),
-                statusCode: res.status,
-                statusBool: res.ok,
-                body: await res.text()
-            }
+            // Log request and update rate limit.
+            await this.logRequest(res);
+
         } catch (err) {
-            throw new Error(err);
+            throw new Error(`Error sending request: ${err}`);
         }
         // Method chaining
         return this;
+    }
+
+    private async logRequest(res): Promise<void> {
+        // Record the unix timestamp of the request for rate limiting.
+        this.API.lastRequestMs = Date.now();
+        // Handle Response
+        this._response = {
+            fetchResponse: res,
+            unixTime: Date.now(),
+            statusCode: res.status,
+            statusBool: res.ok,
+            body: await res.text()
+        }
     }
 
     public getJSON(): any {
@@ -360,7 +426,7 @@ export class NSRequest {
         return this._response.json;
     }
 
-    public async convertToJsonAsync(): Promise<NSRequest> {
+    public async convertToJsonAsync(): Promise<RequestBuilder> {
         // Verifies if the a response has been set.
         if (!this._response.body) {
             throw new Error("No response body could be found. You can examine the response body by doing: ")
@@ -394,5 +460,97 @@ export class NSRequest {
                 resolve(data);
             });
         });
+    }
+
+    async getXPin(password: string): Promise<number> {
+        // Add password to headers.
+        this._headers.append('X-Password', password);
+        console.log(JSON.stringify(this.headers))
+        // Send request with a x-password header set.
+        try {
+            let res = await fetch(this._url.href, {
+                headers: JSON.stringify(this.headers)
+            });
+            // Log request and update rate limit.
+            await this.logRequest(res);
+            // Return the x-pin header.
+            return res.headers.get('x-pin');
+        // Error handling.
+        } catch (err) {
+            // Remove the wrong password from the headers.
+            this._headers.delete('X-Password');
+            // Throw error.
+            throw new Error(err);
+        }
+    }
+
+    protected resetURL(): RequestBuilder {
+        this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+        this._shards = [];
+
+        // Method chaning
+        return this;
+    }
+}
+
+/**
+ * As opposed to building requests manually, this class has built-in methods for easily accessing and handling
+ * common information one looks for. You do not build, send, or parse requests manually.
+ * @param { API } API The API object to enforce rate limiting and user agents.
+ */
+export class NSFunctions extends RequestBuilder {
+
+    constructor(api: API) {
+        super(api);
+    }
+
+    /**
+     * Returns a boolean response, if nation1 is endorsing nation2.
+     * Does not modify the URL of the request.
+     * @param nation1 - The nation to check if it is endorsing nation2.
+     * @param nation2
+     */
+    async isEndorsing(nation1: string, nation2: string): Promise<boolean> {
+        // Get endorsements of nation2.
+        const r = await (await this
+            .addNation(nation2)
+            .addShards('endorsements')
+            .sendRequestAsync())
+            .convertToJsonAsync();
+
+        // Extract endorsements from JObject response and convert them into an array.
+        const endorsements: string[] = r.json['endorsements'].split(',');
+
+        // Check if nation1 is endorsed by nation2.
+        for (let nation of endorsements) {
+            // Return true if nation1 is endorsed by nation2.
+            if (nation === nation1) {
+                this.resetURL();
+                return true;
+            }
+        }
+
+        this.resetURL();
+        // If nation1 is not endorsed by nation2, return false.
+        return false;
+    }
+
+    /**
+     * Use the NS Verification API to verify the validity of a verifcation code.
+     * Returns either a 0 or 1 as a number, as described in the NS API documentation.
+     * @param nation
+     * @param checksum
+     */
+    public async verify(nation: string, checksum: string): Promise<number> {
+        // Add nation
+        this.addNation(nation);
+        // Adds "a=verify" to the URL parameters.
+        this._url.searchParams.append('a', 'verify');
+        // Adds
+        this._url.searchParams.append('checksum', checksum);
+        // Get response
+        await this.sendRequestAsync();
+        // Return response as number.
+        return parseInt(this._response.body);
     }
 }
