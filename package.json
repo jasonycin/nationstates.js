@@ -10,12 +10,12 @@
   "keywords": [
     "NationStates",
     "API",
-    "Library",
     "Wrapper",
     "Asynchronous"
   ],
   "author": "Heaveria",
   "license": "CC BY-NC-ND 4.0",
+  "repository": "https://github.com/heaveria-ns/nationstates.js",
   "dependencies": {
     "@types/node": "^16.11.6",
     "node-fetch": "^2.6.5",
