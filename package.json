@@ -2,15 +2,17 @@
   "name": "nationstates.js",
   "version": "0.1.1",
   "description": "UNDER DEVELOPMENT! USE AT OWN RISK: A library to interact with the NationStates API.",
-  "main": "dist/API.js",
-  "types": "dist/API.d.ts",
+  "main": "API.js",
+  "types": "API.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "NationStates",
     "API",
-    "Library"
+    "Library",
+    "Wrapper",
+    "Asynchronous"
   ],
   "author": "Heaveria",
   "license": "CC BY-NC-ND 4.0",

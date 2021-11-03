@@ -59,6 +59,11 @@ var node_fetch_2 = require("node-fetch");
 var fs = require("fs");
 // Xml2js v.0.4.23
 var xml2js = require("xml2js");
+// Zlib
+var zlib = require("zlib");
+/**
+ * Required for all other classes. Defines the configuration of the library and is used to enforce rate limits and user agents.
+ */
 var API = /** @class */ (function () {
     /**
      * Instance must be instantiated with a user agent string. Setting a custom rate limit is optional.
@@ -221,7 +226,6 @@ var xmlParser = new xml2js.Parser({
  * A object that is used to:
  * - (1) Define the architecture of a https request before it sent to the API.
  * - (2) Access and modify the response of a request.
- * @class
  * @example let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
  */
 var RequestBuilder = /** @class */ (function () {
@@ -389,33 +393,6 @@ var RequestBuilder = /** @class */ (function () {
      * @example await new Request(API).downloadNationDumpAsync('./{FILENAME}.xml.gz');
      * @param pathToSaveFile
      */
-    RequestBuilder.prototype.downloadNationDumpAsync = function (pathToSaveFile) {
-        return __awaiter(this, void 0, void 0, function () {
-            var res, fileStream;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: 
-                    // Check rate limit.
-                    return [4 /*yield*/, this.execRateLimit()];
-                    case 1:
-                        // Check rate limit.
-                        _a.sent();
-                        return [4 /*yield*/, node_fetch_2.default('https://www.nationstates.net/pages/nations.xml.gz')];
-                    case 2:
-                        res = _a.sent();
-                        fileStream = fs.createWriteStream(pathToSaveFile);
-                        return [4 /*yield*/, new Promise(function (resolve, reject) {
-                                res.body.pipe(fileStream);
-                                res.body.on("error", reject);
-                                fileStream.on("finish", resolve);
-                            })];
-                    case 3:
-                        _a.sent();
-                        return [2 /*return*/, this];
-                }
-            });
-        });
-    };
     /**
      * Download the regions data dump from the API.
      * @example await new Request(API).downloadRegionDumpAsync('./{FILENAME}.xml.gz');
@@ -434,7 +411,7 @@ var RequestBuilder = /** @class */ (function () {
                         _a.sent();
                         return [4 /*yield*/, node_fetch_2.default('https://www.nationstates.net/pages/regions.xml.gz', {
                                 headers: {
-                                    'User-Agent': "API written by Heaveria. In-use by: " + this.API.userAgent
+                                    'User-Agent': this.API.userAgent
                                 }
                             })];
                     case 2:
@@ -567,6 +544,10 @@ var RequestBuilder = /** @class */ (function () {
             });
         });
     };
+    /**
+     * TODO: DOES NOT WORK. Needs to be developed and implemented.
+     * @param password
+     */
     RequestBuilder.prototype.getXPin = function (password) {
         return __awaiter(this, void 0, void 0, function () {
             var res, err_3;
@@ -602,10 +583,17 @@ var RequestBuilder = /** @class */ (function () {
             });
         });
     };
+    /**
+     * Resets the url and shards to the default. Protected to allow extending into the NSFunctions class.
+     * End-users wishing to reset their URL should simply create a new RequestBuilder object instead.
+     * @protected
+     */
     RequestBuilder.prototype.resetURL = function () {
+        // Resets the URL to the default.
         this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+        // Empty the query string by overwriting the shards with an empty array.
         this._shards = [];
-        // Method chaning
+        // Method chaining
         return this;
     };
     return RequestBuilder;
@@ -632,10 +620,13 @@ var NSFunctions = /** @class */ (function (_super) {
             var r, endorsements, _i, endorsements_1, nation;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this
-                            .addNation(nation2)
-                            .addShards('endorsements')
-                            .sendRequestAsync()];
+                    case 0:
+                        // Reset the object's URL.
+                        this.resetURL();
+                        return [4 /*yield*/, this
+                                .addNation(nation2)
+                                .addShards('endorsements')
+                                .sendRequestAsync()];
                     case 1: return [4 /*yield*/, (_a.sent())
                             .convertToJsonAsync()];
                     case 2:
@@ -650,18 +641,25 @@ var NSFunctions = /** @class */ (function (_super) {
                                 return [2 /*return*/, true];
                             }
                         }
-                        this.resetURL();
                         // If nation1 is not endorsed by nation2, return false.
                         return [2 /*return*/, false];
                 }
             });
         });
     };
+    /**
+     * Use the NS Verification API to verify the validity of a verifcation code.
+     * Returns either a 0 or 1 as a number, as described in the NS API documentation.
+     * @param nation
+     * @param checksum
+     */
     NSFunctions.prototype.verify = function (nation, checksum) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        // Reset the object's URL.
+                        this.resetURL();
                         // Add nation
                         this.addNation(nation);
                         // Adds "a=verify" to the URL parameters.
@@ -675,6 +673,126 @@ var NSFunctions = /** @class */ (function (_super) {
                         _a.sent();
                         // Return response as number.
                         return [2 /*return*/, parseInt(this._response.body)];
+                }
+            });
+        });
+    };
+    /**
+     * Download the nation data dump from the API.
+     * Future feature: Decode utf-8 within the dump.
+     * @param type -  Either 'nation' or 'region'
+     * @param directoryToSave - The directory to save the dump to. Should be ended by a slash. Ex: "./downloads/"
+     * @param options
+     */
+    NSFunctions.prototype.downloadDumpAsync = function (type, directoryToSave, options) {
+        return __awaiter(this, void 0, void 0, function () {
+            var currentDate, fileName, res, fileStream;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // TODO: Implement decoding utf-8 within the dump.
+                        // Verify if type is correct
+                        if (type !== 'nations' && type !== 'regions') {
+                            throw new Error('Type must be either "nation" or "region"');
+                        }
+                        currentDate = new Date().toISOString().slice(0, 10);
+                        fileName = directoryToSave + type + '.' + currentDate;
+                        // Check rate limit.
+                        return [4 /*yield*/, this.execRateLimit()];
+                    case 1:
+                        // Check rate limit.
+                        _a.sent();
+                        return [4 /*yield*/, node_fetch_2.default("https://www.nationstates.net/pages/" + type + ".xml.gz", {
+                                headers: {
+                                    'User-Agent': this.API.userAgent
+                                }
+                            })];
+                    case 2:
+                        res = _a.sent();
+                        fileStream = fs.createWriteStream(fileName + '.xml.gz');
+                        // Synchronously write the file to the file stream.
+                        return [4 /*yield*/, new Promise(function (resolve, reject) {
+                                res.body.pipe(fileStream);
+                                res.body.on("error", reject);
+                                fileStream.on("finish", resolve);
+                            })];
+                    case 3:
+                        // Synchronously write the file to the file stream.
+                        _a.sent();
+                        if (!(options === null || options === void 0 ? void 0 : options.extract)) return [3 /*break*/, 5];
+                        // Extract the file to XML.
+                        return [4 /*yield*/, this.gunzip(fileName + '.xml.gz', fileName + '.xml')];
+                    case 4:
+                        // Extract the file to XML.
+                        _a.sent();
+                        _a.label = 5;
+                    case 5:
+                        if (!(options === null || options === void 0 ? void 0 : options.convertToJson)) return [3 /*break*/, 9];
+                        if (!!fs.existsSync(fileName + '.xml')) return [3 /*break*/, 7];
+                        return [4 /*yield*/, this.gunzip(fileName + '.xml.gz', fileName + '.xml')];
+                    case 6:
+                        _a.sent();
+                        _a.label = 7;
+                    case 7: 
+                    // Convert the XML file to JSON.
+                    return [4 /*yield*/, this.xmlToJson(fileName + '.xml', fileName + '.json')];
+                    case 8:
+                        // Convert the XML file to JSON.
+                        _a.sent();
+                        _a.label = 9;
+                    case 9:
+                        if (options === null || options === void 0 ? void 0 : options.deleteXMLGZ) {
+                            // Delete the original xml.gz file.
+                            fs.unlinkSync(fileName + '.xml.gz');
+                        }
+                        if (options === null || options === void 0 ? void 0 : options.deleteXML) {
+                            // Delete the unzipped .xml file.
+                            fs.unlinkSync(fileName + '.xml');
+                        }
+                        // Method chaining
+                        return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    NSFunctions.prototype.gunzip = function (file, savePath) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: 
+                    // Decompress the gzip file.
+                    return [4 /*yield*/, new Promise(function (resolve) {
+                            zlib.gunzip(fs.readFileSync(file), function (err, buffer) {
+                                fs.writeFileSync(savePath, buffer);
+                                resolve('Finished unzipping.');
+                            });
+                        })];
+                    case 1:
+                        // Decompress the gzip file.
+                        _a.sent();
+                        // Method chaining
+                        return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    NSFunctions.prototype.xmlToJson = function (file, savePath) {
+        return __awaiter(this, void 0, void 0, function () {
+            var xml, json, _a, _b, _c, _d;
+            return __generator(this, function (_e) {
+                switch (_e.label) {
+                    case 0:
+                        xml = fs.readFileSync(file, 'utf8');
+                        json = fs.createWriteStream(savePath);
+                        // Write JSON to file
+                        _b = (_a = json).write;
+                        _d = (_c = JSON).stringify;
+                        return [4 /*yield*/, this.parseXml(xml)];
+                    case 1:
+                        // Write JSON to file
+                        _b.apply(_a, [_d.apply(_c, [_e.sent()])]);
+                        // Method Chaining
+                        return [2 /*return*/, this];
                 }
             });
         });
