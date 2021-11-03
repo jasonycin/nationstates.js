@@ -5,6 +5,8 @@ import fetch from 'node-fetch';
 import * as fs from "fs";
 // Xml2js v.0.4.23
 import * as xml2js from 'xml2js';
+// Zlib
+import * as zlib from 'zlib';
 
 /**
  * Defines the structure of the _authentication object in the API class.
@@ -181,7 +183,6 @@ export interface Response {
  * A object that is used to:
  * - (1) Define the architecture of a https request before it sent to the API.
  * - (2) Access and modify the response of a request.
- * @class
  * @example let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
  */
 export class RequestBuilder {
@@ -346,22 +347,6 @@ export class RequestBuilder {
      * @example await new Request(API).downloadNationDumpAsync('./{FILENAME}.xml.gz');
      * @param pathToSaveFile
      */
-    public async downloadNationDumpAsync(pathToSaveFile: string): Promise<this> {
-        // Check rate limit.
-        await this.execRateLimit();
-        const res = await fetch('https://www.nationstates.net/pages/nations.xml.gz', {
-            headers: {
-                'User-Agent': this.API.userAgent
-            }
-        });
-        const fileStream = fs.createWriteStream(pathToSaveFile);
-        await new Promise((resolve, reject) => {
-            res.body.pipe(fileStream);
-            res.body.on("error", reject);
-            fileStream.on("finish", resolve);
-        });
-        return this;
-    }
 
     /**
      * Download the regions data dump from the API.
@@ -451,7 +436,7 @@ export class RequestBuilder {
      * @param {string} xml The XML to parse.
      * @return data promise returning a JSON object.
      */
-    private parseXml(xml: string): Promise<object> {
+    protected parseXml(xml: string): Promise<object> {
         return new Promise((resolve, reject) => {
             xmlParser.parseString(xml, (err: any, data: any) => {
                 if (err) {
@@ -462,6 +447,10 @@ export class RequestBuilder {
         });
     }
 
+    /**
+     * TODO: DOES NOT WORK. Needs to be developed and implemented.
+     * @param password
+     */
     async getXPin(password: string): Promise<number> {
         // Add password to headers.
         this._headers.append('X-Password', password);
@@ -484,13 +473,27 @@ export class RequestBuilder {
         }
     }
 
+    /**
+     * Resets the url and shards to the default. Protected to allow extending into the NSFunctions class.
+     * End-users wishing to reset their URL should simply create a new RequestBuilder object instead.
+     * @protected
+     */
     protected resetURL(): RequestBuilder {
+        // Resets the URL to the default.
         this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+        // Empty the query string by overwriting the shards with an empty array.
         this._shards = [];
-
-        // Method chaning
+        // Method chaining
         return this;
     }
+}
+
+
+export interface dumpOptions {
+    extract?: boolean;
+    deleteXMLGZ?: boolean;
+    deleteXML?: boolean;
+    convertToJson?: boolean;
 }
 
 /**
@@ -499,7 +502,6 @@ export class RequestBuilder {
  * @param { API } API The API object to enforce rate limiting and user agents.
  */
 export class NSFunctions extends RequestBuilder {
-
     constructor(api: API) {
         super(api);
     }
@@ -511,6 +513,9 @@ export class NSFunctions extends RequestBuilder {
      * @param nation2
      */
     async isEndorsing(nation1: string, nation2: string): Promise<boolean> {
+        // Reset the object's URL.
+        this.resetURL();
+
         // Get endorsements of nation2.
         const r = await (await this
             .addNation(nation2)
@@ -529,8 +534,6 @@ export class NSFunctions extends RequestBuilder {
                 return true;
             }
         }
-
-        this.resetURL();
         // If nation1 is not endorsed by nation2, return false.
         return false;
     }
@@ -542,6 +545,8 @@ export class NSFunctions extends RequestBuilder {
      * @param checksum
      */
     public async verify(nation: string, checksum: string): Promise<number> {
+        // Reset the object's URL.
+        this.resetURL();
         // Add nation
         this.addNation(nation);
         // Adds "a=verify" to the URL parameters.
@@ -552,5 +557,99 @@ export class NSFunctions extends RequestBuilder {
         await this.sendRequestAsync();
         // Return response as number.
         return parseInt(this._response.body);
+    }
+
+
+    /**
+     * Download the nation data dump from the API.
+     * Future feature: Decode utf-8 within the dump.
+     * @param type -  Either 'nation' or 'region'
+     * @param directoryToSave - The directory to save the dump to. Should be ended by a slash. Ex: "./downloads/"
+     * @param options
+     */
+    public async downloadDumpAsync(type: string, directoryToSave: string, options?: dumpOptions): Promise<NSFunctions> {
+        // TODO: Implement decoding utf-8 within the dump.
+        // Verify if type is correct
+        if (type !== 'nations' && type !== 'regions') {
+            throw new Error('Type must be either "nation" or "region"');
+        }
+
+        // Get current date as YYYY-MM-DD
+        const currentDate = new Date().toISOString().slice(0, 10);
+
+        // Set fileName with directory
+        const fileName = directoryToSave + type + '.' + currentDate;
+
+        // Check rate limit.
+        await this.execRateLimit();
+
+        // Request the file from the NationStates API.
+        const res = await fetch(`https://www.nationstates.net/pages/${type}.xml.gz`, {
+            headers: {
+                'User-Agent': this.API.userAgent
+            }
+        });
+
+        // Create a file stream to save the file.
+        const fileStream = fs.createWriteStream(fileName + '.xml.gz');
+        // Synchronously write the file to the file stream.
+        await new Promise((resolve, reject) => {
+            res.body.pipe(fileStream);
+            res.body.on("error", reject);
+            fileStream.on("finish", resolve);
+        });
+
+        if (options?.extract) {
+            // Extract the file to XML.
+            await this.gunzip(fileName + '.xml.gz', fileName + '.xml');
+        }
+
+        if (options?.convertToJson) {
+            // Verify the XML file has been unzipped. If not, do so.
+            if (!fs.existsSync(fileName + '.xml')) {
+                await this.gunzip(fileName + '.xml.gz', fileName + '.xml');
+            }
+
+            // Convert the XML file to JSON.
+            await this.xmlToJson(fileName + '.xml', fileName + '.json');
+        }
+
+        if (options?.deleteXMLGZ) {
+            // Delete the original xml.gz file.
+            fs.unlinkSync(fileName +  '.xml.gz');
+        }
+
+        if (options?.deleteXML) {
+            // Delete the unzipped .xml file.
+            fs.unlinkSync(fileName +  '.xml');
+        }
+
+        // Method chaining
+        return this;
+    }
+
+    private async gunzip(file: string, savePath: string): Promise<NSFunctions> {
+        // Decompress the gzip file.
+        await new Promise((resolve) => {
+            zlib.gunzip(fs.readFileSync(file), (err, buffer) => {
+                fs.writeFileSync(savePath, buffer);
+                resolve('Finished unzipping.');
+            })
+        });
+        // Method chaining
+        return this;
+    }
+
+    private async xmlToJson(file: string, savePath: string): Promise<NSFunctions> {
+       // Convert the XML file to JSON.
+        let xml = fs.readFileSync(file, 'utf8');
+
+        // Create JSON file
+        const json = fs.createWriteStream(savePath);
+        // Write JSON to file
+        json.write(JSON.stringify(await this.parseXml(xml)));
+
+        // Method Chaining
+        return this;
     }
 }
