@@ -2,7 +2,7 @@
 --- | --- | --- | ---
 
 # Nationstates.js | API Wrapper
-### Version: 0.2.0 | [📖 Documentation](heaveria-ns.github.io/nationstates.js/)
+### Version: 0.2.1 | [📖 Documentation](heaveria-ns.github.io/nationstates.js/)
 
 Nationstates.js is a **wrapper** to ease accessing the NationStates API through **method-chaining** and other abstractions. 
 Additional **built-in methods for common tasks** are also included.
