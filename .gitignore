@@ -1,3 +1,3 @@
 # Project exclude paths
-/dist/API.d.ts
+API.d.ts
 /node_modules/

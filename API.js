@@ -51,8 +51,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NSFunctions = exports.RequestBuilder = exports.API = void 0;
-// Node-fetch v.2.6.5. Supported by developers.
+exports.Dispatch = exports.NSMethods = exports.PrivateRequestBuilder = exports.RequestBuilder = exports.xmlParser = exports.API = void 0;
+// Node-fetch v.2.6.5. Still supported by developers.
 var node_fetch_1 = require("node-fetch");
 var node_fetch_2 = require("node-fetch");
 // Filesystem
@@ -62,7 +62,8 @@ var xml2js = require("xml2js");
 // Zlib
 var zlib = require("zlib");
 /**
- * Required for all other classes. Defines the configuration of the library and is used to enforce rate limits and user agents.
+ * Required for all other classes. Defines the configuration of the wrapper and is used to enforce rate limits and user agents.
+ * @example const api = new API('Testlandia');
  */
 var API = /** @class */ (function () {
     /**
@@ -72,9 +73,6 @@ var API = /** @class */ (function () {
      */
     function API(userAgent, rateLimit) {
         this._rateLimit = 650;
-        this._authentication = {
-            status: false,
-        };
         this.userAgent = userAgent; // Uses setter
         // If optional rate limit parameter was input.
         if (rateLimit) {
@@ -85,6 +83,7 @@ var API = /** @class */ (function () {
     Object.defineProperty(API.prototype, "userAgent", {
         /**
          * Retrieves the user agent string.
+         * @example console.log(api.userAgent);
          */
         get: function () {
             return this._userAgent;
@@ -92,6 +91,7 @@ var API = /** @class */ (function () {
         /**
          * Sets the user agent. Verifies the parameter length if less than three, is alphanumeric,
          * does not end in an empty space, and is a string.
+         * @example api.userAgent = 'Testlandia';
          * @param {string} userAgent
          */
         set: function (userAgent) {
@@ -114,13 +114,15 @@ var API = /** @class */ (function () {
     });
     Object.defineProperty(API.prototype, "rateLimit", {
         /**
-         * Returns the current rate limit as a string.
+         * Returns the current rate limit as a number.
+         * @example console.log(api.rateLimit);
          */
         get: function () {
             return this._rateLimit;
         },
         /**
          * Set the rateLimit of the instance. Verifies that the input is a number and is >= 650.
+         * @example api.rateLimit = 1500;
          * @param {number} ms - The number of milliseconds to set the rateLimit to.
          */
         set: function (ms) {
@@ -137,18 +139,14 @@ var API = /** @class */ (function () {
     });
     Object.defineProperty(API.prototype, "lastRequestMs", {
         /**
-         * Returns the last request time in milliseconds.
+         * Returns the last request time in milliseconds. Used to enforce rate limits.
+         * @example console.log(api.lastRequestMs);
          */
         get: function () {
-            // Verify is the property has been set.
-            //if (!API._lastRequestMs) {
-            // Throw error.
-            //throw new Error('You have not made a request yet.');
-            //}
-            // Return the last request time.
             return API._lastRequestMs;
         },
         /**
+         * ❌⚠️ DO NOT USE unless you kow what you're doing.
          * Set the time of the last request in milliseconds.
          * @example api.lastRequestMs = Date.now();
          * @param ms
@@ -165,27 +163,7 @@ var API = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    API.prototype.authenticate = function (nation, password) {
-        return __awaiter(this, void 0, void 0, function () {
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = this._authentication;
-                        return [4 /*yield*/, new RequestBuilder(this)
-                                .addNation(nation)
-                                .addShards('unread')
-                                .getXPin(password)];
-                    case 1:
-                        _a._xPin =
-                            _b.sent();
-                        this._authentication.status = true;
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    API.version = '0.0.1-alpha';
+    API.version = '1.0.0';
     return API;
 }());
 exports.API = API;
@@ -195,7 +173,7 @@ exports.API = API;
  * https://github.com/auralia/node-nsapi/blob/master/src/api.ts#L25
  * @hidden
  */
-var xmlParser = new xml2js.Parser({
+exports.xmlParser = new xml2js.Parser({
     charkey: "value",
     trim: true,
     normalizeTags: true,
@@ -223,60 +201,66 @@ var xmlParser = new xml2js.Parser({
         }]
 });
 /**
- * A object that is used to:
+ * Build a request to your specifications! Usage:
  * - (1) Define the architecture of a https request before it sent to the API.
  * - (2) Access and modify the response of a request.
- * @example let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
+ * @example const request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
+ * console.log(request.body);
+ * @param {API} api - The API instance to use. Used to enforce the rate limit and user agent.
  */
 var RequestBuilder = /** @class */ (function () {
     function RequestBuilder(API) {
         this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
-        this._headers = new node_fetch_1.Headers();
+        this._headers = new node_fetch_2.Headers();
         this._shards = [];
         this.API = API;
         this._headers.set('User-Agent', this.API.userAgent);
     }
-    Object.defineProperty(RequestBuilder.prototype, "headers", {
+    Object.defineProperty(RequestBuilder.prototype, "response", {
+        /**
+         * Returns full node-fetch request and other meta-data created by the API wrapper.
+         * Not needed unless you need to do something specific with the request.
+         * @example console.log(request.fetchResponse);
+         */
         get: function () {
-            var headers = {
-                'User-Agent': this.API.userAgent
-            };
-            if (this.API._authentication.status) {
-                headers['X-Pin'] = this.API._authentication._xPin;
+            // Verify if response is undefined.
+            if (!this._response) {
+                throw new Error('No response found. Send a request first using sendRequestAsync()!');
             }
-            return headers;
+            return this._response;
         },
         enumerable: false,
         configurable: true
     });
     Object.defineProperty(RequestBuilder.prototype, "body", {
         /**
-         * Returns the current body located in the response of a RequestBuilder object.
+         * Returns the current body of the last node-fetch request associated with this instance.
+         * @example console.log(request.body);
          */
         get: function () {
             // Verifies if a response has been recieved.
             if (!this._response) {
                 throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?');
             }
-            // If the body is a number, convert the string to a number and return it. Else returns the body as is.
-            return !isNaN(this._response.body) ? this._response.body : parseInt(this._response.body);
+            // If the body is a number, convert the string to a number and return it, else return the body as is.
+            return !isNaN(this._response.body) ? parseInt(this._response.body) : this._response.body;
         },
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(RequestBuilder.prototype, "json", {
+    Object.defineProperty(RequestBuilder.prototype, "js", {
         /**
-         * Returns the current JSON located in the response of a RequestBuilder object.
-         * A conversion to JSON beforehand is required.
-         * @example (1) let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
-         * (2) request.convertToJSON();
-         * (3) console.log(request.json);
+         * Returns the current JS object of the last node-fetch request associated with this instance.
+         * You must convert the body to a JS object before using this method via convertBodyToJSON().
+         * @example request.convertToJSON();
+         * console.log(request.js);
          */
         get: function () {
-            if (!this._response.json) {
-                throw new Error('No JSON found. Try convertToJsonAsync() first.');
+            // Verify if the response has been converted to js.
+            if (!this._response.js) {
+                throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent..');
             }
-            return this._response.json;
+            return this._response.js;
         },
         enumerable: false,
         configurable: true
@@ -284,6 +268,7 @@ var RequestBuilder = /** @class */ (function () {
     Object.defineProperty(RequestBuilder.prototype, "shards", {
         /**
          * Returns the current shards of a RequestBuilder object as a single string or as an array of strings.
+         * @example console.log(request.shards);
          */
         get: function () {
             // Verifies if shards have been added.
@@ -302,7 +287,7 @@ var RequestBuilder = /** @class */ (function () {
     });
     /**
      * Adds the nation to the url parameters.
-     * @example addNation('Testlandia') adds 'nation=Testlandia' to the url.
+     * @example .addNation('Testlandia') adds 'nation=Testlandia' to the url.
      * @param name - The name of the nation from which data is retrieved.
      */
     RequestBuilder.prototype.addNation = function (name) {
@@ -316,30 +301,69 @@ var RequestBuilder = /** @class */ (function () {
             typeof (name) !== 'string') {
             throw new Error("You submitted an invalid nation name: " + name);
         }
+        // Append nation to the url.
         this._url.searchParams.append('nation', name);
         // Method chaining.
         return this;
     };
+    /**
+     * Adds the region to the url parameters.
+     * @example .addRegion('The South Pacific') adds 'region=The%20South%20Pacific' to the url.
+     * @param name
+     */
     RequestBuilder.prototype.addRegion = function (name) {
+        // Append region to the url.
         this._url.searchParams.append('region', name);
         // Method chaining.
         return this;
     };
+    /**
+     * Adds a council ID to the url parameters.
+     * @example .addCouncil(1) adds 'wa=1' to the url.
+     * @param id
+     */
     RequestBuilder.prototype.addCouncilID = function (id) {
+        // Type-checking
+        if (typeof (id) !== 'number') {
+            throw new Error("You submitted an invalid council ID: " + id + ". Must be a number.");
+        }
+        // Verify if ID matches NationStates API specifications.
         if (id > 2 || id < 0) {
             throw new Error('Invalid ID. 1 = GA, 2 = SC.');
         }
+        // Append to URL.
         this._url.searchParams.append('wa', id.toString());
         // Method chaining.
         return this;
     };
+    /**
+     * Adds a resolution ID to the url parameters.
+     * @example .addResolutionID(22) adds 'id=22' to the url parameters.
+     * @param id
+     */
+    RequestBuilder.prototype.addResolutionID = function (id) {
+        // Type-checking
+        if (typeof (id) !== 'number') {
+            throw new Error("You submitted an invalid resolution ID: " + id + ". Must be a number.");
+        }
+        // Append to URL.
+        this._url.searchParams.append('id', id.toString());
+        // Method chaining.
+        return this;
+    };
+    /**
+     * Add shards to the url parameters after the 'q=' parameter.
+     * @example .addShards('flag') adds 'q=Testlandia' to the url.
+     * @example .addShards([ 'flag', 'population' ]) adds 'q=flag+population' to the url.
+     * @param shards
+     */
     RequestBuilder.prototype.addShards = function (shards) {
         switch (typeof (shards)) {
-            // If only a single shard is given, push it to the class _shards[].
+            // If only a single shard is given, push it to _shards[].
             case "string":
                 this._shards.push(shards);
                 break;
-            // If array of strings, then push each string to the class _shards[].
+            // If array of strings, then push each string to _shards[].
             case "object":
                 // Iterate over each shard.
                 for (var _i = 0, shards_1 = shards; _i < shards_1.length; _i++) {
@@ -361,6 +385,18 @@ var RequestBuilder = /** @class */ (function () {
         return this;
     };
     /**
+     * Appends the given parameters to the url with the defined key and value.
+     * @example .addCustomParam('key', 'value') adds 'key=value' to the url.
+     * @param key
+     * @param value
+     */
+    RequestBuilder.prototype.addCustomParam = function (key, value) {
+        // Append key and value to the url.
+        this._url.searchParams.append(key.toString(), value.toString());
+        // Method chaining.
+        return this;
+    };
+    /**
      * Removes all shards from the RequestBuilder object and its associated URL.
      * @example new RequestBuilder(api).addShards('numnations').removeShards()
      */
@@ -368,6 +404,9 @@ var RequestBuilder = /** @class */ (function () {
         this._url.searchParams.delete('q');
         this._shards.length = 0;
     };
+    /**
+     * Enforces the rate-limit by calculating time-to-wait and then waiting for the specified amount of time.
+     */
     RequestBuilder.prototype.execRateLimit = function () {
         return __awaiter(this, void 0, void 0, function () {
             var difference, timeToWait_1;
@@ -389,46 +428,10 @@ var RequestBuilder = /** @class */ (function () {
         });
     };
     /**
-     * Download the nation data dump from the API.
-     * @example await new Request(API).downloadNationDumpAsync('./{FILENAME}.xml.gz');
-     * @param pathToSaveFile
+     * Executes the request and saves the response to the RequestBuilder object.
+     * Retrieve after awaiting it via .response, .body, or convert it to a JS object with convertToJSON();
+     * @example const req = await new RequestBuilder(api).addNation('Testlandia').sendRequestAsync()
      */
-    /**
-     * Download the regions data dump from the API.
-     * @example await new Request(API).downloadRegionDumpAsync('./{FILENAME}.xml.gz');
-     * @param pathToSaveFile
-     */
-    RequestBuilder.prototype.downloadRegionDumpAsync = function (pathToSaveFile) {
-        return __awaiter(this, void 0, void 0, function () {
-            var res, fileStream;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: 
-                    // Check rate limit.
-                    return [4 /*yield*/, this.execRateLimit()];
-                    case 1:
-                        // Check rate limit.
-                        _a.sent();
-                        return [4 /*yield*/, node_fetch_2.default('https://www.nationstates.net/pages/regions.xml.gz', {
-                                headers: {
-                                    'User-Agent': this.API.userAgent
-                                }
-                            })];
-                    case 2:
-                        res = _a.sent();
-                        fileStream = fs.createWriteStream(pathToSaveFile);
-                        return [4 /*yield*/, new Promise(function (resolve, reject) {
-                                res.body.pipe(fileStream);
-                                res.body.on("error", reject);
-                                fileStream.on("finish", resolve);
-                            })];
-                    case 3:
-                        _a.sent();
-                        return [2 /*return*/, this];
-                }
-            });
-        });
-    };
     RequestBuilder.prototype.sendRequestAsync = function () {
         return __awaiter(this, void 0, void 0, function () {
             var res, err_1;
@@ -443,7 +446,7 @@ var RequestBuilder = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_2.default(this._url.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                 }
@@ -466,6 +469,11 @@ var RequestBuilder = /** @class */ (function () {
             });
         });
     };
+    /**
+     * Saves the node-fetch response to the _response object within the instance.
+     * @param res
+     * @protected
+     */
     RequestBuilder.prototype.logRequest = function (res) {
         return __awaiter(this, void 0, void 0, function () {
             var _a;
@@ -493,13 +501,7 @@ var RequestBuilder = /** @class */ (function () {
             });
         });
     };
-    RequestBuilder.prototype.getJSON = function () {
-        if (!this._response.json) {
-            throw new Error('No JSON found. Try convertToJsonAsync() first.');
-        }
-        return this._response.json;
-    };
-    RequestBuilder.prototype.convertToJsonAsync = function () {
+    RequestBuilder.prototype.convertToJSAsync = function () {
         return __awaiter(this, void 0, void 0, function () {
             var _a, err_2;
             return __generator(this, function (_b) {
@@ -515,7 +517,7 @@ var RequestBuilder = /** @class */ (function () {
                         _a = this._response;
                         return [4 /*yield*/, this.parseXml(this._response.body)];
                     case 2:
-                        _a.json = _b.sent();
+                        _a.js = _b.sent();
                         return [3 /*break*/, 4];
                     case 3:
                         err_2 = _b.sent();
@@ -536,7 +538,7 @@ var RequestBuilder = /** @class */ (function () {
      */
     RequestBuilder.prototype.parseXml = function (xml) {
         return new Promise(function (resolve, reject) {
-            xmlParser.parseString(xml, function (err, data) {
+            exports.xmlParser.parseString(xml, function (err, data) {
                 if (err) {
                     return reject(err);
                 }
@@ -545,46 +547,7 @@ var RequestBuilder = /** @class */ (function () {
         });
     };
     /**
-     * TODO: DOES NOT WORK. Needs to be developed and implemented.
-     * @param password
-     */
-    RequestBuilder.prototype.getXPin = function (password) {
-        return __awaiter(this, void 0, void 0, function () {
-            var res, err_3;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        // Add password to headers.
-                        this._headers.append('X-Password', password);
-                        console.log(JSON.stringify(this.headers));
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 4, , 5]);
-                        return [4 /*yield*/, node_fetch_2.default(this._url.href, {
-                                headers: JSON.stringify(this.headers)
-                            })];
-                    case 2:
-                        res = _a.sent();
-                        // Log request and update rate limit.
-                        return [4 /*yield*/, this.logRequest(res)];
-                    case 3:
-                        // Log request and update rate limit.
-                        _a.sent();
-                        // Return the x-pin header.
-                        return [2 /*return*/, res.headers.get('x-pin')];
-                    case 4:
-                        err_3 = _a.sent();
-                        // Remove the wrong password from the headers.
-                        this._headers.delete('X-Password');
-                        // Throw error.
-                        throw new Error(err_3);
-                    case 5: return [2 /*return*/];
-                }
-            });
-        });
-    };
-    /**
-     * Resets the url and shards to the default. Protected to allow extending into the NSFunctions class.
+     * Resets the url and shards to the default. Protected to allow extending into the NSMethods class.
      * End-users wishing to reset their URL should simply create a new RequestBuilder object instead.
      * @protected
      */
@@ -600,22 +563,184 @@ var RequestBuilder = /** @class */ (function () {
 }());
 exports.RequestBuilder = RequestBuilder;
 /**
+ * Extends the RequestBuilder to allow authenticating with the NS API and accessing private shards.
+ * No support for accessing private commands. Only shards.
+ * @example const request = new PrivateRequestBuilder(api).authenticate('Testlandia', 'password');
+ */
+var PrivateRequestBuilder = /** @class */ (function (_super) {
+    __extends(PrivateRequestBuilder, _super);
+    function PrivateRequestBuilder(api) {
+        var _this = _super.call(this, api) || this;
+        _this._authentication = {
+            status: false,
+        };
+        return _this;
+    }
+    Object.defineProperty(PrivateRequestBuilder.prototype, "authInfo", {
+        /**
+         * Returns the authentication information as an object.
+         */
+        get: function () {
+            return this._authentication;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    /**
+     * Retrieves the X-Pin value from NationStates and saves all information to the _authentication object.
+     * Must be run before sending any requests.
+     * @example const request = new PrivateRequestBuilder(api).authenticate('Testlandia', 'password');
+     * @param {string} nation The nation to retrieve the X-Pin for.
+     * @param {string} password The password for the nation.
+     */
+    PrivateRequestBuilder.prototype.authenticate = function (nation, password) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, e_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        // Set nation and password in authentication object, so that if the x-pin expires it can be re-retrieved.
+                        this._authentication._nation = nation;
+                        this._authentication._xPassword = password;
+                        // Retrieve x-pin.
+                        this.addNation(nation).addShards('unread');
+                        _b.label = 1;
+                    case 1:
+                        _b.trys.push([1, 3, , 4]);
+                        _a = this._authentication;
+                        return [4 /*yield*/, this.getXPin(password)];
+                    case 2:
+                        _a._xPin = _b.sent();
+                        this._authentication.status = true;
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_1 = _b.sent();
+                        throw new Error(e_1);
+                    case 4:
+                        // Since we modified the URL when retrieving the x-pin, we will reset it.
+                        this.resetURL();
+                        // Method chaining.
+                        return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    /**
+     * Sends a request to the NationStates API and returns the x-pin header from the response.
+     * @param password
+     */
+    PrivateRequestBuilder.prototype.getXPin = function (password) {
+        return __awaiter(this, void 0, void 0, function () {
+            var res, err_3;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: 
+                    // Check rate limit
+                    return [4 /*yield*/, this.execRateLimit()];
+                    case 1:
+                        // Check rate limit
+                        _a.sent();
+                        // Add password to headers.
+                        this._headers.append('X-Password', password);
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 5, , 6]);
+                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                                headers: {
+                                    'User-Agent': this.API.userAgent,
+                                    'X-Password': password
+                                }
+                            })];
+                    case 3:
+                        res = _a.sent();
+                        // Log request and update rate limit.
+                        return [4 /*yield*/, this.logRequest(res)];
+                    case 4:
+                        // Log request and update rate limit.
+                        _a.sent();
+                        // Return the x-pin header.
+                        return [2 /*return*/, res.headers.get('x-pin')];
+                    case 5:
+                        err_3 = _a.sent();
+                        // Remove the wrong password from the headers.
+                        this._headers.delete('X-Password');
+                        // Throw error.
+                        throw new Error(err_3);
+                    case 6: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    /**
+     * Executes the request and saves the response to the RequestBuilder object.
+     * Retrieve after awaiting it via .response, .body, or convert it to a JS object with convertToJSON();
+     * Polymorph of RequestBuilder.
+     * @example const req = await new RequestBuilder(api).addNation('Testlandia').sendRequestAsync()
+     */
+    PrivateRequestBuilder.prototype.sendRequestAsync = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var res, err_4;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // Verifies that the authentication object is set.
+                        if (!this._authentication.status) {
+                            throw new Error('You must first authenticate! Run authenticate() on your private request before sending it.');
+                        }
+                        // Check rate limit.
+                        return [4 /*yield*/, this.execRateLimit()];
+                    case 1:
+                        // Check rate limit.
+                        _a.sent();
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 5, , 6]);
+                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                                headers: {
+                                    'User-Agent': this.API.userAgent,
+                                    'X-Pin': this._authentication._xPin.toString()
+                                }
+                            })];
+                    case 3:
+                        res = _a.sent();
+                        // Log request and update rate limit.
+                        return [4 /*yield*/, this.logRequest(res)];
+                    case 4:
+                        // Log request and update rate limit.
+                        _a.sent();
+                        return [3 /*break*/, 6];
+                    case 5:
+                        err_4 = _a.sent();
+                        throw new Error("Error sending request: " + err_4);
+                    case 6: 
+                    // Method chaining
+                    return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    return PrivateRequestBuilder;
+}(RequestBuilder));
+exports.PrivateRequestBuilder = PrivateRequestBuilder;
+/**
  * As opposed to building requests manually, this class has built-in methods for easily accessing and handling
  * common information one looks for. You do not build, send, or parse requests manually.
+ * @example const methods = new NSMethods(api);
  * @param { API } API The API object to enforce rate limiting and user agents.
  */
-var NSFunctions = /** @class */ (function (_super) {
-    __extends(NSFunctions, _super);
-    function NSFunctions(api) {
+var NSMethods = /** @class */ (function (_super) {
+    __extends(NSMethods, _super);
+    function NSMethods(api) {
         return _super.call(this, api) || this;
     }
     /**
      * Returns a boolean response, if nation1 is endorsing nation2.
      * Does not modify the URL of the request.
-     * @param nation1 - The nation to check if it is endorsing nation2.
-     * @param nation2
+     * @example console.log(await methods.isEndorsing('Testlandia', 'Testlandia')); // false
+     * @param nation1 - The endorser.
+     * @param nation2 - The endorsee.
      */
-    NSFunctions.prototype.isEndorsing = function (nation1, nation2) {
+    NSMethods.prototype.isEndorsing = function (nation1, nation2) {
         return __awaiter(this, void 0, void 0, function () {
             var r, endorsements, _i, endorsements_1, nation;
             return __generator(this, function (_a) {
@@ -628,10 +753,10 @@ var NSFunctions = /** @class */ (function (_super) {
                                 .addShards('endorsements')
                                 .sendRequestAsync()];
                     case 1: return [4 /*yield*/, (_a.sent())
-                            .convertToJsonAsync()];
+                            .convertToJSAsync()];
                     case 2:
                         r = _a.sent();
-                        endorsements = r.json['endorsements'].split(',');
+                        endorsements = r.js['endorsements'].split(',');
                         // Check if nation1 is endorsed by nation2.
                         for (_i = 0, endorsements_1 = endorsements; _i < endorsements_1.length; _i++) {
                             nation = endorsements_1[_i];
@@ -648,12 +773,13 @@ var NSFunctions = /** @class */ (function (_super) {
         });
     };
     /**
-     * Use the NS Verification API to verify the validity of a verifcation code.
+     * Use the NS Verification API to verify the validity of a verification code.
      * Returns either a 0 or 1 as a number, as described in the NS API documentation.
+     * @example console.log(await methods.verify('Testlandia', '12345')); // 0
      * @param nation
      * @param checksum
      */
-    NSFunctions.prototype.verify = function (nation, checksum) {
+    NSMethods.prototype.verify = function (nation, checksum) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -679,12 +805,14 @@ var NSFunctions = /** @class */ (function (_super) {
     };
     /**
      * Download the nation data dump from the API.
+     * Note that it can take a while to download the dump, especially for nations or when converting to JSON.
      * Future feature: Decode utf-8 within the dump.
+     * @example methods.downloadDump('Testlandia', {extract: true, deleteXMLGz: true, deleteXML: true, convertToJson: true}); // Returns just a .json file
      * @param type -  Either 'nation' or 'region'
      * @param directoryToSave - The directory to save the dump to. Should be ended by a slash. Ex: "./downloads/"
-     * @param options
+     * @param options - If left blank, just downloads the {type}.xml.gz file.
      */
-    NSFunctions.prototype.downloadDumpAsync = function (type, directoryToSave, options) {
+    NSMethods.prototype.downloadDumpAsync = function (type, directoryToSave, options) {
         return __awaiter(this, void 0, void 0, function () {
             var currentDate, fileName, res, fileStream;
             return __generator(this, function (_a) {
@@ -702,7 +830,7 @@ var NSFunctions = /** @class */ (function (_super) {
                     case 1:
                         // Check rate limit.
                         _a.sent();
-                        return [4 /*yield*/, node_fetch_2.default("https://www.nationstates.net/pages/" + type + ".xml.gz", {
+                        return [4 /*yield*/, node_fetch_1.default("https://www.nationstates.net/pages/" + type + ".xml.gz", {
                                 headers: {
                                     'User-Agent': this.API.userAgent
                                 }
@@ -741,7 +869,7 @@ var NSFunctions = /** @class */ (function (_super) {
                         _a.sent();
                         _a.label = 9;
                     case 9:
-                        if (options === null || options === void 0 ? void 0 : options.deleteXMLGZ) {
+                        if (options === null || options === void 0 ? void 0 : options.deleteXMLGz) {
                             // Delete the original xml.gz file.
                             fs.unlinkSync(fileName + '.xml.gz');
                         }
@@ -755,7 +883,13 @@ var NSFunctions = /** @class */ (function (_super) {
             });
         });
     };
-    NSFunctions.prototype.gunzip = function (file, savePath) {
+    /**
+     * Extracts a gzipped file.
+     * @param file
+     * @param savePath
+     * @private
+     */
+    NSMethods.prototype.gunzip = function (file, savePath) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -776,7 +910,14 @@ var NSFunctions = /** @class */ (function (_super) {
             });
         });
     };
-    NSFunctions.prototype.xmlToJson = function (file, savePath) {
+    /**
+     * Converts an XML file to JSON and saves it to the specified path.
+     * Uses the XML2Js library.
+     * @param file
+     * @param savePath
+     * @private
+     */
+    NSMethods.prototype.xmlToJson = function (file, savePath) {
         return __awaiter(this, void 0, void 0, function () {
             var xml, json, _a, _b, _c, _d;
             return __generator(this, function (_e) {
@@ -797,7 +938,85 @@ var NSFunctions = /** @class */ (function (_super) {
             });
         });
     };
-    return NSFunctions;
+    return NSMethods;
 }(RequestBuilder));
-exports.NSFunctions = NSFunctions;
+exports.NSMethods = NSMethods;
+/**
+ * Future support for dispatch private commands.
+ * @hidden
+ */
+var Dispatch = /** @class */ (function () {
+    function Dispatch() {
+        this.c = 'dispatch';
+    }
+    /**
+     * Set the dispatch mode. It can be either:
+     * - 'add'
+     * - 'remove'
+     * - 'edit'<br><br>
+     * See NationStates API documentation for more information.
+     * @param method
+     */
+    Dispatch.prototype.dispatch = function (method) {
+        // Standardize
+        method = method.toLowerCase();
+        // Only allow add, remove, and edit. Then method chaining by returning this.
+        if (method === 'add') {
+            this.dispatchObj.dispatch = method;
+            return this;
+        }
+        if (method === 'remove') {
+            this.dispatchObj.dispatch = method;
+            return this;
+        }
+        if (method === 'edit') {
+            this.dispatchObj.dispatch = method;
+            return this;
+        }
+        // Otherwise, throw an error.
+        throw new Error('You specified an incorrect dispatch method. Add, remove, or edit is valid.');
+    };
+    /**
+     * Add title to the dispatch.
+     * @param title
+     */
+    Dispatch.prototype.title = function (title) {
+        this.dispatchObj.title = title;
+        return this;
+    };
+    Dispatch.prototype.text = function (text) {
+        this.dispatchObj.text = text;
+        return this;
+    };
+    /**
+     * Set the category of the dispatch.
+     * @param category
+     */
+    Dispatch.prototype.category = function (category) {
+        // Type-checking
+        if (typeof (category) !== 'number') {
+            throw new Error('The category must be a number. See NationStates API documentation.');
+        }
+        // Set the category
+        this.dispatchObj.category = category;
+        // Method chaining
+        return this;
+    };
+    /**
+     * Set the category of the dispatch.
+     * @param subcategory
+     */
+    Dispatch.prototype.subcategory = function (subcategory) {
+        // Type-checking
+        if (typeof (subcategory) !== 'number') {
+            throw new Error('The category must be a number. See NationStates API documentation.');
+        }
+        // Set the category
+        this.dispatchObj.category = subcategory;
+        // Method chaining
+        return this;
+    };
+    return Dispatch;
+}());
+exports.Dispatch = Dispatch;
 //# sourceMappingURL=API.js.map
