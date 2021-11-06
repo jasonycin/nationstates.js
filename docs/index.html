@@ -13,12 +13,11 @@
   <h1>Nationstates.js | API Wrapper</h1>
 </a>
 
-<a href="#not-recommended-for-use-under-development" id="not-recommended-for-use-under-development" style="color: inherit; text-decoration: none;">
-  <h3>NOT RECOMMENDED FOR USE. UNDER DEVELOPMENT.</h3>
+<a href="#version-021--📖-documentation" id="version-021--📖-documentation" style="color: inherit; text-decoration: none;">
+  <h3>Version: 0.2.1 | <a href="heaveria-ns.github.io/nationstates.js/">📖 Documentation</a></h3>
 </a>
-<p>❌ Use at your own risk.</p>
 <p>Nationstates.js is a <strong>wrapper</strong> to ease accessing the NationStates API through <strong>method-chaining</strong> and other abstractions. 
-Additional <strong>built-in functions for common tasks</strong> are also included.</p>
+Additional <strong>built-in methods for common tasks</strong> are also included.</p>
 <p>This wrapper takes care of enforcing the rate limit, conversions to JS objects, and allowing usage of async/await.</p>
 <table>
 <thead>
@@ -36,7 +35,7 @@ Additional <strong>built-in functions for common tasks</strong> are also include
 <tr>
 <td>✅</td>
 <td>Dumps</td>
-<td>Support for easily downloading, unzipping, and converting to JSON.</td>
+<td>Support for easily downloading, unzipping, and converting to JSON. See <a href="#nsmethods">NSMethods</a> and the <a href="https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html#downloadDumpAsync">documentation</a>.</td>
 </tr>
 <tr>
 <td>✅</td>
@@ -85,7 +84,7 @@ Additional <strong>built-in functions for common tasks</strong> are also include
 </tr>
 <tr>
 <td>✅</td>
-<td>Built-in methods</td>
+<td>Built-in methods for common tasks</td>
 <td>See <a href="#nsmethods">NSMethods</a>.</td>
 </tr>
 </tbody></table>
@@ -116,7 +115,7 @@ Additional <strong>built-in functions for common tasks</strong> are also include
 <a href="#requestbuilder" id="requestbuilder" style="color: inherit; text-decoration: none;">
   <h2>RequestBuilder</h2>
 </a>
-<p>➡ <a href="https://heaveria-ns.github.io/nationstates.js/classes/RequestBuilder.html">Documentation</a><br>➡ For private requests/commands, see <a href="#privaterequestbuilder">PrivateRequestBuilder</a>.</p>
+<p>➡ <a href="https://heaveria-ns.github.io/nationstates.js/classes/RequestBuilder.html">Documentation</a><br>➡ For private shards use <a href="#privaterequestbuilder">PrivateRequestBuilder</a>.</p>
 
 <a href="#usage-example" id="usage-example" style="color: inherit; text-decoration: none;">
   <h3>Usage Example:</h3>
@@ -141,15 +140,11 @@ Additional <strong>built-in functions for common tasks</strong> are also include
 <p>You are responsible for traversing the result. This is approximately what the raw response will look like:</p>
 <pre><code class="language-JSON"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-8">&quot;id&quot;</span><span class="hl-1">: </span><span class="hl-5">&quot;testlandia&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-8">&quot;population&quot;</span><span class="hl-1">: </span><span class="hl-9">39561</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-8">&quot;flag&quot;</span><span class="hl-1">: </span><span class="hl-5">&quot;https://www.nationstates.net/images/flags/Iran.svg&quot;</span><br/><span class="hl-1">}</span>
 </code></pre>
-<pre><code class="language-TypeScript"><span class="hl-2">// Get raw response.</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-0">req1</span><span class="hl-1">.</span><span class="hl-0">js</span><span class="hl-1">) </span><span class="hl-2">// See above</span><br/><span class="hl-2">// Traverse the response. Dot notation also works.</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-0">req1</span><span class="hl-1">.</span><span class="hl-0">js</span><span class="hl-1">[</span><span class="hl-5">&#39;flag&#39;</span><span class="hl-1">]); </span><span class="hl-2">// https://www.nationstates.net/images/flags/Iran.svg</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-0">req1</span><span class="hl-1">.</span><span class="hl-0">js</span><span class="hl-1">[</span><span class="hl-5">&#39;population&#39;</span><span class="hl-1">]); </span><span class="hl-2">// 39561</span>
+<pre><code class="language-TypeScript"><span class="hl-2">// Get full JS Object response.</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-0">req1</span><span class="hl-1">.</span><span class="hl-0">js</span><span class="hl-1">) </span><span class="hl-2">// See above</span><br/><span class="hl-2">// Traverse the response. Dot notation also works.</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-0">req1</span><span class="hl-1">.</span><span class="hl-0">js</span><span class="hl-1">[</span><span class="hl-5">&#39;flag&#39;</span><span class="hl-1">]); </span><span class="hl-2">// https://www.nationstates.net/images/flags/Iran.svg</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-0">req1</span><span class="hl-1">.</span><span class="hl-0">js</span><span class="hl-1">[</span><span class="hl-5">&#39;population&#39;</span><span class="hl-1">]); </span><span class="hl-2">// 39561</span>
 </code></pre>
 
 <a href="#privaterequestbuilder" id="privaterequestbuilder" style="color: inherit; text-decoration: none;">
   <h2>PrivateRequestBuilder</h2>
-</a>
-
-<a href="#❌do-not-use-❌-still-being-built" id="❌do-not-use-❌-still-being-built" style="color: inherit; text-decoration: none;">
-  <h3>❌DO NOT USE ❌ Still being built.</h3>
 </a>
 <p>➡ <a href="https://heaveria-ns.github.io/nationstates.js/classes/PrivateRequestBuilder.html">Documentation</a></p>
 
@@ -157,15 +152,14 @@ Additional <strong>built-in functions for common tasks</strong> are also include
   <h3>Instructions</h3>
 </a>
 <p>This clsss extends the <a href="#requestbuilder">RequestBuilder</a> and functions the same.<br>But in order to send any request, you must <strong>first authenticate()</strong> 
-in order to get the x-pin and allow quick repeated requests:</p>
+in order to get the x-pin and allow for quick repeated requests:</p>
 <pre><code class="language-TypeScript"><span class="hl-2">// Instantiate and authenticate all-in-one.</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">privReq</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-0">ns</span><span class="hl-1">.</span><span class="hl-7">PrivateRequestBuilder</span><span class="hl-1">(</span><span class="hl-0">api</span><span class="hl-1">, </span><span class="hl-5">&#39;nation&#39;</span><span class="hl-1">, </span><span class="hl-5">&#39;password&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-2">/*---OR---*/</span><br/><br/><span class="hl-2">// Instantiate object and THEN authenticate.</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">privReq</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-0">ns</span><span class="hl-1">.</span><span class="hl-7">PrivateRequestBuilder</span><span class="hl-1">(</span><span class="hl-0">api</span><span class="hl-1">);</span><br/><span class="hl-0">privReq</span><span class="hl-1">.</span><span class="hl-7">authenticate</span><span class="hl-1">(</span><span class="hl-5">&#39;nation&#39;</span><span class="hl-1">, </span><span class="hl-5">&#39;password&#39;</span><span class="hl-1">); </span><span class="hl-2">// You can re-authenticate. Reccomended to create a new object though.</span>
 </code></pre>
 
-<a href="#notice--reccomendation" id="notice--reccomendation" style="color: inherit; text-decoration: none;">
-  <h3>Notice / Reccomendation</h3>
+<a href="#notice" id="notice" style="color: inherit; text-decoration: none;">
+  <h3>Notice</h3>
 </a>
-<p>⚠️⛔️ <strong>Do not use for non-private requests.</strong><br>The rate limit is doubled as the NationStates API
-requires two requests per access to a private shard/command. Sending requests will be slower.</p>
+<p>⚠️⛔️ <strong>Will not work if you did not authenticate().</strong></p>
 
 <a href="#nsmethods" id="nsmethods" style="color: inherit; text-decoration: none;">
   <h2>NSMethods</h2>
@@ -184,7 +178,7 @@ requires two requests per access to a private shard/command. Sending requests wi
 </tr>
 <tr>
 <td><code>downloadDumpAsync(type, directory, options{})</code></td>
-<td>Download data dumps. For options, see <a href="https://heaveria-ns.github.io/nationstates.js/interfaces/dumpOptions.html">DumpOptions</a>.</td>
+<td>Download data dumps. For options, see <a href="https://heaveria-ns.github.io/nationstates.js/interfaces/DumpOptions.html">DumpOptions</a>.</td>
 </tr>
 <tr>
 <td><code>isEndorsing(nation1, nation2)</code></td>
