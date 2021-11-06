@@ -1,6 +1,6 @@
-// Node-fetch v.2.6.5. Supported by developers.
-import { Headers } from 'node-fetch';
+// Node-fetch v.2.6.5. Still supported by developers.
 import fetch from 'node-fetch';
+import { Headers } from 'node-fetch';
 // Filesystem
 import * as fs from "fs";
 // Xml2js v.0.4.23
@@ -8,27 +8,16 @@ import * as xml2js from 'xml2js';
 // Zlib
 import * as zlib from 'zlib';
 
-/**
- * Defines the structure of the _authentication object in the API class.
- */
-interface Auth {
-    status: boolean,
-    _xPassword?: string,
-    _xAutoLogin?: string,
-    _xPin?: number
-}
 
 /**
- * Required for all other classes. Defines the configuration of the library and is used to enforce rate limits and user agents.
+ * Required for all other classes. Defines the configuration of the wrapper and is used to enforce rate limits and user agents.
+ * @example const api = new API('Testlandia');
  */
 export class API {
-    static readonly version: string = '0.0.1-alpha';
+    static readonly version: string = '1.0.0';
     private _userAgent: string;
     private _rateLimit: number = 650;
     private static _lastRequestMs: number;
-    public _authentication: Auth = {
-        status: false,
-    }
 
     /**
      * Instance must be instantiated with a user agent string. Setting a custom rate limit is optional.
@@ -47,6 +36,7 @@ export class API {
 
     /**
      * Retrieves the user agent string.
+     * @example console.log(api.userAgent);
      */
     get userAgent(): string {
         return this._userAgent;
@@ -55,6 +45,7 @@ export class API {
     /**
      * Sets the user agent. Verifies the parameter length if less than three, is alphanumeric,
      * does not end in an empty space, and is a string.
+     * @example api.userAgent = 'Testlandia';
      * @param {string} userAgent
      */
     set userAgent(userAgent: string) {
@@ -74,7 +65,8 @@ export class API {
     }
 
     /**
-     * Returns the current rate limit as a string.
+     * Returns the current rate limit as a number.
+     * @example console.log(api.rateLimit);
      */
     get rateLimit(): number {
         return this._rateLimit;
@@ -82,6 +74,7 @@ export class API {
 
     /**
      * Set the rateLimit of the instance. Verifies that the input is a number and is >= 650.
+     * @example api.rateLimit = 1500;
      * @param {number} ms - The number of milliseconds to set the rateLimit to.
      */
     set rateLimit(ms: number) {
@@ -90,24 +83,21 @@ export class API {
             // If true, throw error.
             throw new Error(`You submitted an invalid rate limit: ${ms}ms. Must be equal to or higher than 650.`);
         }
+
         // Set rate limit.
         this._rateLimit = ms;
     }
 
     /**
-     * Returns the last request time in milliseconds.
+     * Returns the last request time in milliseconds. Used to enforce rate limits.
+     * @example console.log(api.lastRequestMs);
      */
     public get lastRequestMs(): number {
-        // Verify is the property has been set.
-        //if (!API._lastRequestMs) {
-            // Throw error.
-            //throw new Error('You have not made a request yet.');
-        //}
-        // Return the last request time.
         return API._lastRequestMs;
     }
 
     /**
+     * ❌⚠️ DO NOT USE unless you kow what you're doing.
      * Set the time of the last request in milliseconds.
      * @example api.lastRequestMs = Date.now();
      * @param ms
@@ -121,15 +111,6 @@ export class API {
         // Set the last request time.
         API._lastRequestMs = ms;
     }
-
-    public async authenticate(nation: string, password: string) {
-        this._authentication._xPin =
-            await new RequestBuilder(this)
-            .addNation(nation)
-            .addShards('unread')
-            .getXPin(password)
-        this._authentication.status = true;
-    }
 }
 
 /*---------------------------------------------*/
@@ -139,7 +120,7 @@ export class API {
  * https://github.com/auralia/node-nsapi/blob/master/src/api.ts#L25
  * @hidden
  */
-const xmlParser = new xml2js.Parser({
+export const xmlParser = new xml2js.Parser({
     charkey: "value",
     trim: true,
     normalizeTags: true,
@@ -165,6 +146,10 @@ const xmlParser = new xml2js.Parser({
     }]
 });
 
+
+
+/*------------Request Builder---------------------*/
+
 /**
  * Defines the layout of the response object in a RequestBuilder object.
  * @interface
@@ -176,14 +161,16 @@ export interface Response {
     statusBool: boolean,
     body: any,
     error?: string,
-    json?: any
+    js?: any
 }
 
 /**
- * A object that is used to:
+ * Build a request to your specifications! Usage:
  * - (1) Define the architecture of a https request before it sent to the API.
  * - (2) Access and modify the response of a request.
- * @example let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
+ * @example const request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
+ * console.log(request.body);
+ * @param {API} api - The API instance to use. Used to enforce the rate limit and user agent.
  */
 export class RequestBuilder {
     protected API: API;
@@ -197,48 +184,53 @@ export class RequestBuilder {
         this._headers.set('User-Agent', this.API.userAgent);
     }
 
-    get headers(): any {
-        let headers = {
-            'User-Agent': this.API.userAgent
-        };
-
-        if (this.API._authentication.status) {
-            headers['X-Pin'] = this.API._authentication._xPin;
+    /**
+     * Returns full node-fetch request and other meta-data created by the API wrapper.
+     * Not needed unless you need to do something specific with the request.
+     * @example console.log(request.fetchResponse);
+     */
+    public get response(): Response {
+        // Verify if response is undefined.
+        if (!this._response) {
+            throw new Error('No response found. Send a request first using sendRequestAsync()!')
         }
 
-        return headers;
+        return this._response;
     }
 
 
     /**
-     * Returns the current body located in the response of a RequestBuilder object.
+     * Returns the current body of the last node-fetch request associated with this instance.
+     * @example console.log(request.body);
      */
-    public get body(): string | number | boolean | object {
+    public get body(): string | number {
         // Verifies if a response has been recieved.
         if (!this._response) {
             throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?')
         }
 
-        // If the body is a number, convert the string to a number and return it. Else returns the body as is.
-        return !isNaN(this._response.body) ? this._response.body : parseInt(this._response.body);
+        // If the body is a number, convert the string to a number and return it, else return the body as is.
+        return !isNaN(this._response.body) ? parseInt(this._response.body) : this._response.body;
     }
 
     /**
-     * Returns the current JSON located in the response of a RequestBuilder object.
-     * A conversion to JSON beforehand is required.
-     * @example (1) let request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
-     * (2) request.convertToJSON();
-     * (3) console.log(request.json);
+     * Returns the current JS object of the last node-fetch request associated with this instance.
+     * You must convert the body to a JS object before using this method via convertBodyToJSON().
+     * @example request.convertToJSON();
+     * console.log(request.js);
      */
-    public get json(): object {
-        if (!this._response.json) {
-            throw new Error('No JSON found. Try convertToJsonAsync() first.')
+    public get js(): object {
+        // Verify if the response has been converted to js.
+        if (!this._response.js) {
+            throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent..')
         }
-        return this._response.json;
+
+        return this._response.js;
     }
 
     /**
      * Returns the current shards of a RequestBuilder object as a single string or as an array of strings.
+     * @example console.log(request.shards);
      */
     public get shards(): string | string[] {
         // Verifies if shards have been added.
@@ -257,10 +249,10 @@ export class RequestBuilder {
 
     /**
      * Adds the nation to the url parameters.
-     * @example addNation('Testlandia') adds 'nation=Testlandia' to the url.
+     * @example .addNation('Testlandia') adds 'nation=Testlandia' to the url.
      * @param name - The name of the nation from which data is retrieved.
      */
-    public addNation(name: string) {
+    public addNation(name: string): RequestBuilder {
         if (// Minimum length
             name.length < 3 ||
             // Must be alphanumeric, or only alpha, or only numeric
@@ -269,35 +261,83 @@ export class RequestBuilder {
             name.slice(-1) === ' ' ||
             // Data type is string.
             typeof (name) !== 'string') {
-                throw new Error(`You submitted an invalid nation name: ${name}`);
+            throw new Error(`You submitted an invalid nation name: ${name}`);
         }
+
+        // Append nation to the url.
         this._url.searchParams.append('nation', name);
+
         // Method chaining.
         return this;
     }
 
-    public addRegion(name: string) {
+    /**
+     * Adds the region to the url parameters.
+     * @example .addRegion('The South Pacific') adds 'region=The%20South%20Pacific' to the url.
+     * @param name
+     */
+    public addRegion(name: string): RequestBuilder {
+        // Append region to the url.
         this._url.searchParams.append('region', name);
+
         // Method chaining.
         return this;
     }
 
-    public addCouncilID(id: number) {
+    /**
+     * Adds a council ID to the url parameters.
+     * @example .addCouncil(1) adds 'wa=1' to the url.
+     * @param id
+     */
+    public addCouncilID(id: number): RequestBuilder {
+        // Type-checking
+        if (typeof (id) !== 'number') {
+            throw new Error(`You submitted an invalid council ID: ${id}. Must be a number.`);
+        }
+
+        // Verify if ID matches NationStates API specifications.
         if (id > 2 || id < 0) {
             throw new Error('Invalid ID. 1 = GA, 2 = SC.')
         }
+
+        // Append to URL.
         this._url.searchParams.append('wa', id.toString());
+
         // Method chaining.
         return this;
     }
 
+    /**
+     * Adds a resolution ID to the url parameters.
+     * @example .addResolutionID(22) adds 'id=22' to the url parameters.
+     * @param id
+     */
+    public addResolutionID(id: number): RequestBuilder {
+        // Type-checking
+        if (typeof (id) !== 'number') {
+            throw new Error(`You submitted an invalid resolution ID: ${id}. Must be a number.`);
+        }
+
+        // Append to URL.
+        this._url.searchParams.append('id', id.toString());
+
+        // Method chaining.
+        return this;
+    }
+
+    /**
+     * Add shards to the url parameters after the 'q=' parameter.
+     * @example .addShards('flag') adds 'q=Testlandia' to the url.
+     * @example .addShards([ 'flag', 'population' ]) adds 'q=flag+population' to the url.
+     * @param shards
+     */
     public addShards(shards: string | string[]): RequestBuilder {
         switch (typeof (shards)) {
-            // If only a single shard is given, push it to the class _shards[].
+            // If only a single shard is given, push it to _shards[].
             case "string":
                 this._shards.push(shards);
                 break;
-            // If array of strings, then push each string to the class _shards[].
+            // If array of strings, then push each string to _shards[].
             case "object":
                 // Iterate over each shard.
                 for (let shard of shards) {
@@ -316,7 +356,22 @@ export class RequestBuilder {
 
         // Add shards[] to URL.
         this._url.searchParams.append('q', this._shards.join('+'));
+
         // Method chaining
+        return this;
+    }
+
+    /**
+     * Appends the given parameters to the url with the defined key and value.
+     * @example .addCustomParam('key', 'value') adds 'key=value' to the url.
+     * @param key
+     * @param value
+     */
+    public addCustomParam(key: string, value: string | number) {
+        // Append key and value to the url.
+        this._url.searchParams.append(key.toString(), value.toString());
+
+        // Method chaining.
         return this;
     }
 
@@ -329,7 +384,10 @@ export class RequestBuilder {
         this._shards.length = 0;
     }
 
-    public async execRateLimit(): Promise<void> {
+    /**
+     * Enforces the rate-limit by calculating time-to-wait and then waiting for the specified amount of time.
+     */
+    protected async execRateLimit(): Promise<void> {
         // Get difference in milliseconds between the current date and the last request sent.
         const difference: number = Date.now() - this.API.lastRequestMs;
 
@@ -343,33 +401,10 @@ export class RequestBuilder {
     }
 
     /**
-     * Download the nation data dump from the API.
-     * @example await new Request(API).downloadNationDumpAsync('./{FILENAME}.xml.gz');
-     * @param pathToSaveFile
+     * Executes the request and saves the response to the RequestBuilder object.
+     * Retrieve after awaiting it via .response, .body, or convert it to a JS object with convertToJSON();
+     * @example const req = await new RequestBuilder(api).addNation('Testlandia').sendRequestAsync()
      */
-
-    /**
-     * Download the regions data dump from the API.
-     * @example await new Request(API).downloadRegionDumpAsync('./{FILENAME}.xml.gz');
-     * @param pathToSaveFile
-     */
-    public async downloadRegionDumpAsync(pathToSaveFile: string): Promise<this> {
-        // Check rate limit.
-        await this.execRateLimit();
-        const res = await fetch('https://www.nationstates.net/pages/regions.xml.gz', {
-            headers: {
-                'User-Agent': this.API.userAgent
-            }
-        });
-        const fileStream = fs.createWriteStream(pathToSaveFile);
-        await new Promise((resolve, reject) => {
-            res.body.pipe(fileStream);
-            res.body.on("error", reject);
-            fileStream.on("finish", resolve);
-        });
-        return this;
-    }
-
     public async sendRequestAsync(): Promise<RequestBuilder> {
         // Check rate limit.
         await this.execRateLimit();
@@ -391,7 +426,12 @@ export class RequestBuilder {
         return this;
     }
 
-    private async logRequest(res): Promise<void> {
+    /**
+     * Saves the node-fetch response to the _response object within the instance.
+     * @param res
+     * @protected
+     */
+    protected async logRequest(res): Promise<void> {
         // Record the unix timestamp of the request for rate limiting.
         this.API.lastRequestMs = Date.now();
         // Handle Response
@@ -404,14 +444,7 @@ export class RequestBuilder {
         }
     }
 
-    public getJSON(): any {
-        if (!this._response.json) {
-            throw new Error('No JSON found. Try convertToJsonAsync() first.')
-        }
-        return this._response.json;
-    }
-
-    public async convertToJsonAsync(): Promise<RequestBuilder> {
+    public async convertToJSAsync(): Promise<RequestBuilder> {
         // Verifies if the a response has been set.
         if (!this._response.body) {
             throw new Error("No response body could be found. You can examine the response body by doing: ")
@@ -419,7 +452,7 @@ export class RequestBuilder {
 
         // Attempts to parse the XML into a JSON object.
         try {
-            this._response.json = await this.parseXml(this._response.body);
+            this._response.js = await this.parseXml(this._response.body);
         }
         catch (err) {
             throw new Error(err);
@@ -448,23 +481,110 @@ export class RequestBuilder {
     }
 
     /**
-     * TODO: DOES NOT WORK. Needs to be developed and implemented.
+     * Resets the url and shards to the default. Protected to allow extending into the NSMethods class.
+     * End-users wishing to reset their URL should simply create a new RequestBuilder object instead.
+     * @protected
+     */
+    protected resetURL(): RequestBuilder {
+        // Resets the URL to the default.
+        this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+
+        // Empty the query string by overwriting the shards with an empty array.
+        this._shards = [];
+
+        // Method chaining
+        return this;
+    }
+}
+
+/*----------PrivateRequestBuilder----------*/
+
+/**
+ * Defines the structure of the _authentication object in the API class.
+ * @interface
+ */
+export interface AuthObj {
+    status: boolean,
+    _nation?: string,
+    _xPassword?: string,
+    _xAutoLogin?: string,
+    _xPin?: number
+}
+
+/**
+ * Extends the RequestBuilder to allow authenticating with the NS API and accessing private shards.
+ * No support for accessing private commands. Only shards.
+ * @example const request = new PrivateRequestBuilder(api).authenticate('Testlandia', 'password');
+ */
+export class PrivateRequestBuilder extends RequestBuilder {
+    public _authentication: AuthObj = {
+        status: false,
+    }
+
+    constructor(api: API) {
+        super(api);
+    }
+
+    /**
+     * Returns the authentication information as an object.
+     */
+    get authInfo(): AuthObj {
+        return this._authentication;
+    }
+
+    /**
+     * Retrieves the X-Pin value from NationStates and saves all information to the _authentication object.
+     * Must be run before sending any requests.
+     * @example const request = new PrivateRequestBuilder(api).authenticate('Testlandia', 'password');
+     * @param {string} nation The nation to retrieve the X-Pin for.
+     * @param {string} password The password for the nation.
+     */
+    public async authenticate(nation: string, password: string): Promise<PrivateRequestBuilder> {
+        // Set nation and password in authentication object, so that if the x-pin expires it can be re-retrieved.
+        this._authentication._nation = nation;
+        this._authentication._xPassword = password;
+
+
+        // Retrieve x-pin.
+        this.addNation(nation).addShards('unread');
+
+        try {
+            this._authentication._xPin = await this.getXPin(password);
+            this._authentication.status = true;
+        } catch (e) {
+            throw new Error(e);
+        }
+
+
+        // Since we modified the URL when retrieving the x-pin, we will reset it.
+        this.resetURL();
+
+        // Method chaining.
+        return this;
+    }
+
+    /**
+     * Sends a request to the NationStates API and returns the x-pin header from the response.
      * @param password
      */
-    async getXPin(password: string): Promise<number> {
+    private async getXPin(password: string): Promise<number> {
+        // Check rate limit
+        await this.execRateLimit();
         // Add password to headers.
         this._headers.append('X-Password', password);
-        console.log(JSON.stringify(this.headers))
         // Send request with a x-password header set.
         try {
             let res = await fetch(this._url.href, {
-                headers: JSON.stringify(this.headers)
+                headers: {
+                    'User-Agent': this.API.userAgent,
+                    'X-Password': password
+                }
             });
             // Log request and update rate limit.
             await this.logRequest(res);
             // Return the x-pin header.
             return res.headers.get('x-pin');
-        // Error handling.
+            // Error handling.
         } catch (err) {
             // Remove the wrong password from the headers.
             this._headers.delete('X-Password');
@@ -474,24 +594,51 @@ export class RequestBuilder {
     }
 
     /**
-     * Resets the url and shards to the default. Protected to allow extending into the NSFunctions class.
-     * End-users wishing to reset their URL should simply create a new RequestBuilder object instead.
-     * @protected
+     * Executes the request and saves the response to the RequestBuilder object.
+     * Retrieve after awaiting it via .response, .body, or convert it to a JS object with convertToJSON();
+     * Polymorph of RequestBuilder.
+     * @example const req = await new RequestBuilder(api).addNation('Testlandia').sendRequestAsync()
      */
-    protected resetURL(): RequestBuilder {
-        // Resets the URL to the default.
-        this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
-        // Empty the query string by overwriting the shards with an empty array.
-        this._shards = [];
+    public async sendRequestAsync(): Promise<RequestBuilder> {
+        // Verifies that the authentication object is set.
+        if (!this._authentication.status) {
+            throw new Error('You must first authenticate! Run authenticate() on your private request before sending it.')
+        }
+
+        // Check rate limit.
+        await this.execRateLimit();
+
+        // Send request
+        try {
+            // Send request.
+            const res = await fetch(this._url.href, {
+                headers: {
+                    'User-Agent': this.API.userAgent,
+                    'X-Pin': this._authentication._xPin.toString()
+                }
+            });
+
+            // Log request and update rate limit.
+            await this.logRequest(res);
+
+        } catch (err) {
+            throw new Error(`Error sending request: ${err}`);
+        }
+
         // Method chaining
         return this;
     }
+
 }
 
+/*-------------NSMethods-------------*/
 
-export interface dumpOptions {
+/**
+ * Defines the options for downloading dumps and what to do with them.
+ */
+export interface DumpOptions {
     extract?: boolean;
-    deleteXMLGZ?: boolean;
+    deleteXMLGz?: boolean;
     deleteXML?: boolean;
     convertToJson?: boolean;
 }
@@ -499,9 +646,10 @@ export interface dumpOptions {
 /**
  * As opposed to building requests manually, this class has built-in methods for easily accessing and handling
  * common information one looks for. You do not build, send, or parse requests manually.
+ * @example const methods = new NSMethods(api);
  * @param { API } API The API object to enforce rate limiting and user agents.
  */
-export class NSFunctions extends RequestBuilder {
+export class NSMethods extends RequestBuilder {
     constructor(api: API) {
         super(api);
     }
@@ -509,8 +657,9 @@ export class NSFunctions extends RequestBuilder {
     /**
      * Returns a boolean response, if nation1 is endorsing nation2.
      * Does not modify the URL of the request.
-     * @param nation1 - The nation to check if it is endorsing nation2.
-     * @param nation2
+     * @example console.log(await methods.isEndorsing('Testlandia', 'Testlandia')); // false
+     * @param nation1 - The endorser.
+     * @param nation2 - The endorsee.
      */
     async isEndorsing(nation1: string, nation2: string): Promise<boolean> {
         // Reset the object's URL.
@@ -521,10 +670,10 @@ export class NSFunctions extends RequestBuilder {
             .addNation(nation2)
             .addShards('endorsements')
             .sendRequestAsync())
-            .convertToJsonAsync();
+            .convertToJSAsync();
 
         // Extract endorsements from JObject response and convert them into an array.
-        const endorsements: string[] = r.json['endorsements'].split(',');
+        const endorsements: string[] = r.js['endorsements'].split(',');
 
         // Check if nation1 is endorsed by nation2.
         for (let nation of endorsements) {
@@ -539,8 +688,9 @@ export class NSFunctions extends RequestBuilder {
     }
 
     /**
-     * Use the NS Verification API to verify the validity of a verifcation code.
+     * Use the NS Verification API to verify the validity of a verification code.
      * Returns either a 0 or 1 as a number, as described in the NS API documentation.
+     * @example console.log(await methods.verify('Testlandia', '12345')); // 0
      * @param nation
      * @param checksum
      */
@@ -562,12 +712,14 @@ export class NSFunctions extends RequestBuilder {
 
     /**
      * Download the nation data dump from the API.
+     * Note that it can take a while to download the dump, especially for nations or when converting to JSON.
      * Future feature: Decode utf-8 within the dump.
+     * @example methods.downloadDump('Testlandia', {extract: true, deleteXMLGz: true, deleteXML: true, convertToJson: true}); // Returns just a .json file
      * @param type -  Either 'nation' or 'region'
      * @param directoryToSave - The directory to save the dump to. Should be ended by a slash. Ex: "./downloads/"
-     * @param options
+     * @param options - If left blank, just downloads the {type}.xml.gz file.
      */
-    public async downloadDumpAsync(type: string, directoryToSave: string, options?: dumpOptions): Promise<NSFunctions> {
+    public async downloadDumpAsync(type: string, directoryToSave: string, options?: DumpOptions): Promise<NSMethods> {
         // TODO: Implement decoding utf-8 within the dump.
         // Verify if type is correct
         if (type !== 'nations' && type !== 'regions') {
@@ -614,7 +766,7 @@ export class NSFunctions extends RequestBuilder {
             await this.xmlToJson(fileName + '.xml', fileName + '.json');
         }
 
-        if (options?.deleteXMLGZ) {
+        if (options?.deleteXMLGz) {
             // Delete the original xml.gz file.
             fs.unlinkSync(fileName +  '.xml.gz');
         }
@@ -628,7 +780,13 @@ export class NSFunctions extends RequestBuilder {
         return this;
     }
 
-    private async gunzip(file: string, savePath: string): Promise<NSFunctions> {
+    /**
+     * Extracts a gzipped file.
+     * @param file
+     * @param savePath
+     * @private
+     */
+    private async gunzip(file: string, savePath: string): Promise<NSMethods> {
         // Decompress the gzip file.
         await new Promise((resolve) => {
             zlib.gunzip(fs.readFileSync(file), (err, buffer) => {
@@ -640,8 +798,15 @@ export class NSFunctions extends RequestBuilder {
         return this;
     }
 
-    private async xmlToJson(file: string, savePath: string): Promise<NSFunctions> {
-       // Convert the XML file to JSON.
+    /**
+     * Converts an XML file to JSON and saves it to the specified path.
+     * Uses the XML2Js library.
+     * @param file
+     * @param savePath
+     * @private
+     */
+    private async xmlToJson(file: string, savePath: string): Promise<NSMethods> {
+        // Convert the XML file to JSON.
         let xml = fs.readFileSync(file, 'utf8');
 
         // Create JSON file
@@ -653,3 +818,97 @@ export class NSFunctions extends RequestBuilder {
         return this;
     }
 }
+
+/**
+ * @hidden
+ */
+export interface DispatchInfo {
+    dispatch: string;
+    title: string;
+    text: string;
+    category: number;
+    subcategory: number;
+}
+
+/**
+ * Future support for dispatch private commands.
+ * @hidden
+ */
+export class Dispatch {
+    private c: string = 'dispatch';
+    public dispatchObj: DispatchInfo;
+
+    constructor() {}
+
+    /**
+     * Set the dispatch mode. It can be either:
+     * - 'add'
+     * - 'remove'
+     * - 'edit'<br><br>
+     * See NationStates API documentation for more information.
+     * @param method
+     */
+    public dispatch(method: string): Dispatch | Error {
+        // Standardize
+        method = method.toLowerCase();
+
+        // Only allow add, remove, and edit. Then method chaining by returning this.
+        if (method === 'add') { this.dispatchObj.dispatch = method; return this; }
+        if (method === 'remove') { this.dispatchObj.dispatch = method; return this; }
+        if (method === 'edit') { this.dispatchObj.dispatch = method; return this; }
+
+        // Otherwise, throw an error.
+        throw new Error('You specified an incorrect dispatch method. Add, remove, or edit is valid.')
+    }
+
+    /**
+     * Add title to the dispatch.
+     * @param title
+     */
+    public title(title: string) {
+        this.dispatchObj.title = title;
+        return this;
+    }
+
+    public text(text: string) {
+        this.dispatchObj.text = text;
+        return this;
+    }
+
+    /**
+     * Set the category of the dispatch.
+     * @param category
+     */
+    public category(category: number) {
+        // Type-checking
+        if (typeof (category) !== 'number') {
+            throw new Error('The category must be a number. See NationStates API documentation.')
+        }
+
+        // Set the category
+        this.dispatchObj.category = category;
+
+        // Method chaining
+        return this;
+    }
+
+    /**
+     * Set the category of the dispatch.
+     * @param subcategory
+     */
+    public subcategory(subcategory: number) {
+        // Type-checking
+        if (typeof (subcategory) !== 'number') {
+            throw new Error('The category must be a number. See NationStates API documentation.')
+        }
+
+        // Set the category
+        this.dispatchObj.category = subcategory;
+
+        // Method chaining
+        return this;
+    }
+}
+
+
+

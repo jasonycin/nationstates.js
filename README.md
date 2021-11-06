@@ -1,33 +1,28 @@
-
-
-
 [![CodeQL](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml)  | ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) | ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJIDEA-000000.svg?style=for-the-badge&logo=intellij-idea&logoColor=white) | ![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
 --- | --- | --- | ---
 
 # Nationstates.js | API Wrapper
-### NOT RECOMMENDED FOR USE. UNDER DEVELOPMENT.
-❌ Use at your own risk.
+### Version: 0.2.0 | [📖 Documentation](heaveria-ns.github.io/nationstates.js/)
 
 Nationstates.js is a **wrapper** to ease accessing the NationStates API through **method-chaining** and other abstractions. 
-Additional **built-in functions for common tasks** are also included.
+Additional **built-in methods for common tasks** are also included.
 
 This wrapper takes care of enforcing the rate limit, conversions to JS objects, and allowing usage of async/await.
 
 ㅤ   | Feature | Note
 ----|---------|--------
  ✅ | Rate limit | Built-in to 650ms. Cannot be lowered.
- ✅ | Dumps | Support for easily downloading, unzipping, and converting to JSON.
- ✅ | Nations | 
- ✅ | Regions
- ✅ | World
- ❌ | World Assembly | Missing support for adding resolution ID. Will be implemented before official release.
+ ✅ | Dumps | Support for easily downloading, unzipping, and converting to JSON. See [NSMethods](#nsmethods) and the [documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html#downloadDumpAsync).
+ ✅ | Nations API | See [RequestBuilder](#requestbuilder).
+ ✅ | Regions API | See [RequestBuilder](#requestbuilder).
+ ✅ | World API | See [RequestBuilder](#requestbuilder).
+ ✅ | World Assembly API | See [RequestBuilder](#requestbuilder).
  ❌ | Telegrams | Future support planned.
- ✅ | Trading Cards | 
- ✅ | Verification | Built-in functions to simplify process. No support for site-specific tokens.
- ❌ | Private shards / commands | Future support planned in first major release.
-
-Built-in features of the NSFunction class.
-
+ ✅ | Trading Cards API | See [RequestBuilder](#requestbuilder).
+ ✅ | Verification API | Built-in functions to simplify process. No support for site-specific tokens. Use [NSMethods](#nsmethods) (reccomended) or  [RequestBuilder](#requestbuilder).
+ ✅ | Private shards | See [PrivateRequestBuilder](#privaterequestbuilder).
+ ❌ | Private commands | Future support for dispatches planned. 
+ ✅ | Built-in methods for common tasks | See [NSMethods](#nsmethods).
 
 
 ## Installation / Setup
@@ -40,7 +35,7 @@ npm i nationstates.js
 ### 2. Import/Require the library
 ```TypeScript
 // For TypeScript, you should use the following import statement:
-import { API, RequestBuilder } from 'nationstates.js';
+import * as ns from 'nationstates.js';
 
 // For standard JavaScript:
 const ns = require('nationstates.js');
@@ -53,16 +48,17 @@ const ns = require('nationstates.js');
  * TODO: Ensure to replace the user-agent. This is usually the name of your own nation.
  *       This allows NationStates servers to recognize you.
  */
-const api = new API('user-Agent');
+const api = new ns.API('user-Agent');
 ```
 
 ## RequestBuilder
-➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/RequestBuilder.html)
+➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/RequestBuilder.html)  
+➡ For private shards use [PrivateRequestBuilder](#privaterequestbuilder).
 ### Usage Example:
 In this example, we will get Testlandia's flag and population as a JS object.
 #### 1. Instantiate Object
 ```TypeScript
-const req1 = new RequestBuilder(api);
+const req1 = new ns.RequestBuilder(api);
 ```
 
 #### 2. Build and send the request.
@@ -82,7 +78,7 @@ async function doStuff() {
               .sendRequestAsync();
     
     // Await the conversion and then log the javascript object.
-    console.log((await req1.convertToJsonAsync()).json);
+    console.log((await req1.convertToJSAsync()).js);
 }
 
 // Don't forget to call the async function.
@@ -98,25 +94,48 @@ You are responsible for traversing the result. This is approximately what the ra
 }
 ```
 ```TypeScript
-// Get raw response.
-console.log(req1.json) // See above
+// Get full JS Object response.
+console.log(req1.js) // See above
 // Traverse the response. Dot notation also works.
-console.log(req1.json['flag']); // https://www.nationstates.net/images/flags/Iran.svg
-console.log(req1.json['population']); // 39561
+console.log(req1.js['flag']); // https://www.nationstates.net/images/flags/Iran.svg
+console.log(req1.js['population']); // 39561
 ```
 
-## NSFunctions
-➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSFunctions.html)
+## PrivateRequestBuilder
+➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/PrivateRequestBuilder.html)
+
+### Instructions
+This clsss extends the [RequestBuilder](#requestbuilder) and functions the same.  
+But in order to send any request, you must **first authenticate()** 
+in order to get the x-pin and allow for quick repeated requests:
+
+```TypeScript
+// Instantiate and authenticate all-in-one.
+const privReq = new ns.PrivateRequestBuilder(api, 'nation', 'password');
+
+/*---OR---*/
+
+// Instantiate object and THEN authenticate.
+const privReq = new ns.PrivateRequestBuilder(api);
+privReq.authenticate('nation', 'password'); // You can re-authenticate. Reccomended to create a new object though.
+```
+
+### Notice
+⚠️⛔️ **Will not work if you did not authenticate().**
+
+
+## NSMethods
+➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html)
 
 Feature | Purpose
 -------|--------
 `verify(checksum)` | [Verify](https://www.nationstates.net/pages/api.html#verification) the checksum of a nation using. Returns a 0 or 1.
-`downloadDumpAsync(type, directory, options{})` | Download data dumps. For options, see [DumpOptions](https://heaveria-ns.github.io/nationstates.js/interfaces/dumpOptions.html).
+`downloadDumpAsync(type, directory, options{})` | Download data dumps. For options, see [DumpOptions](https://heaveria-ns.github.io/nationstates.js/interfaces/DumpOptions.html).
 `isEndorsing(nation1, nation2)` | Verifies if `nation1` is endorsing `nation2`. Returns a boolean.
 
 ### Usage Example:
 ```TypeScript
-const nsfun = new NSFunctions(api);
+const nsfun = new ns.NSMethods(api);
 
 let endoResult = await nsfun.isEndorsing('Testlandia', 'Olvaria');
 

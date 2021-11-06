@@ -1,7 +1,7 @@
 {
   "name": "nationstates.js",
-  "version": "0.1.1",
-  "description": "UNDER DEVELOPMENT! USE AT OWN RISK: A library to interact with the NationStates API.",
+  "version": "0.2.0",
+  "description": "A wrapper to interact with the NationStates API.",
   "main": "API.js",
   "types": "API.d.ts",
   "scripts": {
@@ -14,7 +14,7 @@
     "Asynchronous"
   ],
   "author": "Heaveria",
-  "license": "CC BY-NC-ND 4.0",
+  "license": "Creative Commons Attribution 4.0 International License",
   "repository": "https://github.com/heaveria-ns/nationstates.js",
   "dependencies": {
     "@types/node": "^16.11.6",
