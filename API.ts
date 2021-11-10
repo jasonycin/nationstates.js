@@ -8,7 +8,6 @@ import * as xml2js from 'xml2js';
 // Zlib
 import * as zlib from 'zlib';
 
-
 /**
  * Required for all other classes. Defines the configuration of the wrapper and is used to enforce rate limits and user agents.
  * @example const api = new API('Testlandia');
@@ -148,7 +147,13 @@ export const xmlParser = new xml2js.Parser({
     }]
 });
 
-
+/**
+ * Enumerator for the different types WA API calls. See addCouncilID() for usage.
+ */
+export enum CouncilID {
+    GeneralAssembly = 1,
+    SecurityCouncil = 2
+}
 
 /*------------Request Builder---------------------*/
 
@@ -291,7 +296,7 @@ export class RequestBuilder {
      * @example .addCouncil(1) adds 'wa=1' to the url.
      * @param id
      */
-    public addCouncilID(id: number): RequestBuilder {
+    public addCouncilID(id: CouncilID): RequestBuilder {
         // Type-checking
         if (typeof (id) !== 'number') {
             throw new Error(`You submitted an invalid council ID: ${id}. Must be a number.`);
