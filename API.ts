@@ -49,6 +49,8 @@ export class API {
      * @param {string} userAgent
      */
     set userAgent(userAgent: string) {
+        userAgent = userAgent.trim();
+
         if (// Minimum length
             userAgent.length < 3 ||
             // Must be alphanumeric, or only alpha, or only numeric
