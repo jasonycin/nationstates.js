@@ -51,7 +51,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Dispatch = exports.NSMethods = exports.PrivateRequestBuilder = exports.RequestBuilder = exports.xmlParser = exports.API = void 0;
+exports.Dispatch = exports.NSMethods = exports.PrivateRequestBuilder = exports.RequestBuilder = exports.CouncilID = exports.xmlParser = exports.API = void 0;
 // Node-fetch v.2.6.5. Still supported by developers.
 var node_fetch_1 = require("node-fetch");
 var node_fetch_2 = require("node-fetch");
@@ -95,6 +95,7 @@ var API = /** @class */ (function () {
          * @param {string} userAgent
          */
         set: function (userAgent) {
+            userAgent = userAgent.trim();
             if ( // Minimum length
             userAgent.length < 3 ||
                 // Must be alphanumeric, or only alpha, or only numeric
@@ -200,6 +201,14 @@ exports.xmlParser = new xml2js.Parser({
             }
         }]
 });
+/**
+ * Enumerator for the different types WA API calls. See addCouncilID() for usage.
+ */
+var CouncilID;
+(function (CouncilID) {
+    CouncilID[CouncilID["GeneralAssembly"] = 1] = "GeneralAssembly";
+    CouncilID[CouncilID["SecurityCouncil"] = 2] = "SecurityCouncil";
+})(CouncilID = exports.CouncilID || (exports.CouncilID = {}));
 /**
  * Build a request to your specifications! Usage:
  * - (1) Define the architecture of a https request before it sent to the API.
