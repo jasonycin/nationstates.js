@@ -1,6 +1,6 @@
 {
   "name": "nationstates.js",
-  "version": "0.2.3",
+  "version": "0.3.1",
   "description": "A wrapper to interact with the NationStates API.",
   "main": "API.js",
   "types": "API.d.ts",

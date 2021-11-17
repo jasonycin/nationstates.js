@@ -182,13 +182,11 @@ export interface Response {
 export class RequestBuilder {
     protected API: API;
     public _url: URL = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
-    protected _headers: Headers = new Headers();
     protected _shards: string[] = [];
     _response: Response;
 
     constructor(API: API) {
         this.API = API;
-        this._headers.set('User-Agent', this.API.userAgent);
     }
 
     /**
@@ -577,8 +575,6 @@ export class PrivateRequestBuilder extends RequestBuilder {
     private async getXPin(password: string): Promise<number> {
         // Check rate limit
         await this.execRateLimit();
-        // Add password to headers.
-        this._headers.append('X-Password', password);
         // Send request with a x-password header set.
         try {
             let res = await fetch(this._url.href, {
@@ -593,8 +589,6 @@ export class PrivateRequestBuilder extends RequestBuilder {
             return res.headers.get('x-pin');
             // Error handling.
         } catch (err) {
-            // Remove the wrong password from the headers.
-            this._headers.delete('X-Password');
             // Throw error.
             throw new Error(err);
         }
@@ -829,23 +823,27 @@ export class NSMethods extends RequestBuilder {
 /**
  * @hidden
  */
-export interface DispatchInfo {
-    dispatch: string;
-    title: string;
-    text: string;
-    category: number;
-    subcategory: number;
+export enum DispatchMode {
+    add = 'add',
+    remove = 'remove',
+    edit = 'edit'
 }
 
 /**
  * Future support for dispatch private commands.
- * @hidden
  */
-export class Dispatch {
-    private c: string = 'dispatch';
-    public dispatchObj: DispatchInfo;
+export class Dispatch extends RequestBuilder {
+    private readonly nation: string;
+    private readonly password: string;
+    private xPin: number;
 
-    constructor() {}
+    constructor(api: API, nation: string, password: string, action: string) {
+        super(api);
+        this.nation = nation;
+        this.password = password;
+        this.addNation(this.nation).addCustomParam('c', 'dispatch');
+        this.addAction(action);
+    }
 
     /**
      * Set the dispatch mode. It can be either:
@@ -855,14 +853,24 @@ export class Dispatch {
      * See NationStates API documentation for more information.
      * @param method
      */
-    public dispatch(method: string): Dispatch | Error {
-        // Standardize
-        method = method.toLowerCase();
+    private addAction(method: string): Boolean | Error {
+        if (typeof method !== 'string') {
+            throw new Error('Action must be a string.');
+        }
 
-        // Only allow add, remove, and edit. Then method chaining by returning this.
-        if (method === 'add') { this.dispatchObj.dispatch = method; return this; }
-        if (method === 'remove') { this.dispatchObj.dispatch = method; return this; }
-        if (method === 'edit') { this.dispatchObj.dispatch = method; return this; }
+        // Standardize
+        method = method.toLowerCase().trim();
+
+        // Only allow add, remove, and edit.
+        let result: boolean = false;
+        if (method === 'add') { result = true; }
+        if (method === 'remove') { result = true; }
+        if (method === 'edit') { result = true; }
+
+        if (result) {
+            this._url.searchParams.append('dispatch', method);
+            return;
+        }
 
         // Otherwise, throw an error.
         throw new Error('You specified an incorrect dispatch method. Add, remove, or edit is valid.')
@@ -870,15 +878,35 @@ export class Dispatch {
 
     /**
      * Add title to the dispatch.
-     * @param title
+     * @param text
      */
-    public title(title: string) {
-        this.dispatchObj.title = title;
+    public title(text: string) {
+        // Type-checking
+        if (typeof text !== 'string') {
+            throw new Error('The title must be a string.');
+        }
+
+        // Append to URL.
+        this._url.searchParams.append('title', text)
+
+        // Method Chaining
         return this;
     }
 
+    /**
+     * Add text to the dispatch.
+     * @param text
+     */
     public text(text: string) {
-        this.dispatchObj.text = text;
+        // Type-checking
+        if (typeof text !== 'string') {
+            throw new Error('The text must be a string.');
+        }
+
+        // Append to URL.
+        this._url.searchParams.append('text', text)
+
+        // Method Chaining
         return this;
     }
 
@@ -893,7 +921,7 @@ export class Dispatch {
         }
 
         // Set the category
-        this.dispatchObj.category = category;
+        this._url.searchParams.append('category', category.toString());
 
         // Method chaining
         return this;
@@ -910,12 +938,101 @@ export class Dispatch {
         }
 
         // Set the category
-        this.dispatchObj.category = subcategory;
+        this._url.searchParams.append('subcategory', subcategory.toString());
 
         // Method chaining
         return this;
     }
+
+    /**
+     * Set the dispatch ID when editing or a removing a dispatch.
+     * @param id
+     */
+    public dispatchID(id: number) {
+        // Type-checking
+        if (typeof (id) !== 'number') {
+            throw new Error('The dispatch ID must be a number.')
+        }
+
+        // Verify the action is edit or remove.
+        if (this._url.searchParams.get('dispatch') === 'add') {
+            throw new Error('The dispatch ID is only set when editing or removing dispatches..')
+        }
+
+        // Append dispatch ID to URL.
+        this._url.searchParams.append('dispatchid', id.toString());
+
+        // Method chaining
+        return this;
+    }
+
+    /**
+     * Sends command asynchronously according to specifications with mode=prepare and mode=execute.
+     * Returns true if success or throws an error.
+     */
+    public async executeAsync(): Promise<boolean> {
+        /*----- 1. Retrieve the x-pin -----*/
+        if (this.xPin === undefined) {
+            this.xPin = (await new PrivateRequestBuilder(this.API).authenticate(this.nation, this.password))._authentication._xPin;
+        }
+
+        /*----- 2. Prepare Request -----*/
+        // Append prepare mode to the url to later retrieve the success token.
+        this._url.searchParams.append('mode', 'prepare');
+
+        // Send the request.
+        // Check rate limit.
+        await this.execRateLimit();
+
+        // Send request
+        try {
+            // Send request.
+            const res = await fetch(this._url.href, {
+                headers: {
+                    'User-Agent': this.API.userAgent,
+                    'X-Pin': this.xPin.toString()
+                }
+            });
+
+            // Log request and update rate limit.
+            await this.logRequest(res);
+
+        } catch (err) {
+            throw new Error(`Error sending request: ${err}`);
+        }
+
+        // Convert request to JS and extract success token.
+        let token: string = (await this.convertToJSAsync()).js['success'];
+
+        /*----- 3. Execute Request Request -----*/
+        // Replace prepare mode from the url with execute and append success token.
+        this._url.searchParams.set('mode', 'execute');
+        this._url.searchParams.append('token', token);
+
+        // Rate limit
+        await this.execRateLimit();
+
+        // Send request
+        try {
+            // Send request.
+            const res = await fetch(this._url.href, {
+                headers: {
+                    'User-Agent': this.API.userAgent,
+                    'X-Pin': this.xPin.toString()
+                }
+            });
+
+            // Log request and update rate limit.
+            await this.logRequest(res);
+
+        } catch (err) {
+            throw new Error(`Error sending request: ${err}`);
+        }
+
+        return true;
+    }
 }
+
 
 
 
