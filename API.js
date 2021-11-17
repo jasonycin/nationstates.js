@@ -51,10 +51,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Dispatch = exports.NSMethods = exports.PrivateRequestBuilder = exports.RequestBuilder = exports.CouncilID = exports.xmlParser = exports.API = void 0;
+exports.Dispatch = exports.DispatchMode = exports.NSMethods = exports.PrivateRequestBuilder = exports.RequestBuilder = exports.CouncilID = exports.xmlParser = exports.API = void 0;
 // Node-fetch v.2.6.5. Still supported by developers.
 var node_fetch_1 = require("node-fetch");
-var node_fetch_2 = require("node-fetch");
 // Filesystem
 var fs = require("fs");
 // Xml2js v.0.4.23
@@ -220,10 +219,8 @@ var CouncilID;
 var RequestBuilder = /** @class */ (function () {
     function RequestBuilder(API) {
         this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
-        this._headers = new node_fetch_2.Headers();
         this._shards = [];
         this.API = API;
-        this._headers.set('User-Agent', this.API.userAgent);
     }
     Object.defineProperty(RequestBuilder.prototype, "response", {
         /**
@@ -649,8 +646,6 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                     case 1:
                         // Check rate limit
                         _a.sent();
-                        // Add password to headers.
-                        this._headers.append('X-Password', password);
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
@@ -671,8 +666,6 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         return [2 /*return*/, res.headers.get('x-pin')];
                     case 5:
                         err_3 = _a.sent();
-                        // Remove the wrong password from the headers.
-                        this._headers.delete('X-Password');
                         // Throw error.
                         throw new Error(err_3);
                     case 6: return [2 /*return*/];
@@ -951,12 +944,27 @@ var NSMethods = /** @class */ (function (_super) {
 }(RequestBuilder));
 exports.NSMethods = NSMethods;
 /**
+ * @hidden
+ */
+var DispatchMode;
+(function (DispatchMode) {
+    DispatchMode["add"] = "add";
+    DispatchMode["remove"] = "remove";
+    DispatchMode["edit"] = "edit";
+})(DispatchMode = exports.DispatchMode || (exports.DispatchMode = {}));
+/**
  * Future support for dispatch private commands.
  * @hidden
  */
-var Dispatch = /** @class */ (function () {
-    function Dispatch() {
-        this.c = 'dispatch';
+var Dispatch = /** @class */ (function (_super) {
+    __extends(Dispatch, _super);
+    function Dispatch(api, nation, password, action) {
+        var _this = _super.call(this, api) || this;
+        _this.nation = nation;
+        _this.password = password;
+        _this.addNation(_this.nation).addCustomParam('c', 'dispatch');
+        _this.addAction(action);
+        return _this;
     }
     /**
      * Set the dispatch mode. It can be either:
@@ -966,35 +974,56 @@ var Dispatch = /** @class */ (function () {
      * See NationStates API documentation for more information.
      * @param method
      */
-    Dispatch.prototype.dispatch = function (method) {
+    Dispatch.prototype.addAction = function (method) {
+        if (typeof method !== 'string') {
+            throw new Error('Action must be a string.');
+        }
         // Standardize
-        method = method.toLowerCase();
-        // Only allow add, remove, and edit. Then method chaining by returning this.
+        method = method.toLowerCase().trim();
+        // Only allow add, remove, and edit.
+        var result = false;
         if (method === 'add') {
-            this.dispatchObj.dispatch = method;
-            return this;
+            result = true;
         }
         if (method === 'remove') {
-            this.dispatchObj.dispatch = method;
-            return this;
+            result = true;
         }
         if (method === 'edit') {
-            this.dispatchObj.dispatch = method;
-            return this;
+            result = true;
+        }
+        if (result) {
+            this._url.searchParams.append('dispatch', method);
+            return;
         }
         // Otherwise, throw an error.
         throw new Error('You specified an incorrect dispatch method. Add, remove, or edit is valid.');
     };
     /**
      * Add title to the dispatch.
-     * @param title
+     * @param text
      */
-    Dispatch.prototype.title = function (title) {
-        this.dispatchObj.title = title;
+    Dispatch.prototype.title = function (text) {
+        // Type-checking
+        if (typeof text !== 'string') {
+            throw new Error('The title must be a string.');
+        }
+        // Append to URL.
+        this._url.searchParams.append('title', text);
+        // Method Chaining
         return this;
     };
+    /**
+     * Add text to the dispatch.
+     * @param text
+     */
     Dispatch.prototype.text = function (text) {
-        this.dispatchObj.text = text;
+        // Type-checking
+        if (typeof text !== 'string') {
+            throw new Error('The text must be a string.');
+        }
+        // Append to URL.
+        this._url.searchParams.append('text', text);
+        // Method Chaining
         return this;
     };
     /**
@@ -1007,7 +1036,7 @@ var Dispatch = /** @class */ (function () {
             throw new Error('The category must be a number. See NationStates API documentation.');
         }
         // Set the category
-        this.dispatchObj.category = category;
+        this._url.searchParams.append('category', category.toString());
         // Method chaining
         return this;
     };
@@ -1021,11 +1050,113 @@ var Dispatch = /** @class */ (function () {
             throw new Error('The category must be a number. See NationStates API documentation.');
         }
         // Set the category
-        this.dispatchObj.category = subcategory;
+        this._url.searchParams.append('subcategory', subcategory.toString());
         // Method chaining
         return this;
     };
+    /**
+     * Set the dispatch ID when editing or a removing a dispatch.
+     * @param id
+     */
+    Dispatch.prototype.dispatchID = function (id) {
+        // Type-checking
+        if (typeof (id) !== 'number') {
+            throw new Error('The dispatch ID must be a number.');
+        }
+        // Verify the action is edit or remove.
+        if (this._url.searchParams.get('dispatch') === 'add') {
+            throw new Error('The dispatch ID is only set when editing or removing dispatches..');
+        }
+        // Append dispatch ID to URL.
+        this._url.searchParams.append('dispatchid', id.toString());
+        // Method chaining
+        return this;
+    };
+    /**
+     * Sends command asynchronously according to specifications with mode=prepare and mode=execute.
+     * Returns true if success or throws an error.
+     */
+    Dispatch.prototype.executeAsync = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, res, err_5, token, res, err_6;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        if (!(this.xPin === undefined)) return [3 /*break*/, 2];
+                        _a = this;
+                        return [4 /*yield*/, new PrivateRequestBuilder(this.API).authenticate(this.nation, this.password)];
+                    case 1:
+                        _a.xPin = (_b.sent())._authentication._xPin;
+                        _b.label = 2;
+                    case 2:
+                        /*----- 2. Prepare Request -----*/
+                        // Append prepare mode to the url to later retrieve the success token.
+                        this._url.searchParams.append('mode', 'prepare');
+                        // Send the request.
+                        // Check rate limit.
+                        return [4 /*yield*/, this.execRateLimit()];
+                    case 3:
+                        // Send the request.
+                        // Check rate limit.
+                        _b.sent();
+                        _b.label = 4;
+                    case 4:
+                        _b.trys.push([4, 7, , 8]);
+                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                                headers: {
+                                    'User-Agent': this.API.userAgent,
+                                    'X-Pin': this.xPin.toString()
+                                }
+                            })];
+                    case 5:
+                        res = _b.sent();
+                        // Log request and update rate limit.
+                        return [4 /*yield*/, this.logRequest(res)];
+                    case 6:
+                        // Log request and update rate limit.
+                        _b.sent();
+                        return [3 /*break*/, 8];
+                    case 7:
+                        err_5 = _b.sent();
+                        throw new Error("Error sending request: " + err_5);
+                    case 8: return [4 /*yield*/, this.convertToJSAsync()];
+                    case 9:
+                        token = (_b.sent()).js['success'];
+                        /*----- 3. Execute Request Request -----*/
+                        // Replace prepare mode from the url with execute and append success token.
+                        this._url.searchParams.set('mode', 'execute');
+                        this._url.searchParams.append('token', token);
+                        // Rate limit
+                        return [4 /*yield*/, this.execRateLimit()];
+                    case 10:
+                        // Rate limit
+                        _b.sent();
+                        _b.label = 11;
+                    case 11:
+                        _b.trys.push([11, 14, , 15]);
+                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                                headers: {
+                                    'User-Agent': this.API.userAgent,
+                                    'X-Pin': this.xPin.toString()
+                                }
+                            })];
+                    case 12:
+                        res = _b.sent();
+                        // Log request and update rate limit.
+                        return [4 /*yield*/, this.logRequest(res)];
+                    case 13:
+                        // Log request and update rate limit.
+                        _b.sent();
+                        return [3 /*break*/, 15];
+                    case 14:
+                        err_6 = _b.sent();
+                        throw new Error("Error sending request: " + err_6);
+                    case 15: return [2 /*return*/, true];
+                }
+            });
+        });
+    };
     return Dispatch;
-}());
+}(RequestBuilder));
 exports.Dispatch = Dispatch;
 //# sourceMappingURL=API.js.map
