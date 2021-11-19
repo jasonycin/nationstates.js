@@ -218,7 +218,7 @@ var CouncilID;
  */
 var RequestBuilder = /** @class */ (function () {
     function RequestBuilder(API) {
-        this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+        this._urlObj = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
         this._shards = [];
         this.API = API;
     }
@@ -291,6 +291,24 @@ var RequestBuilder = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(RequestBuilder.prototype, "href", {
+        get: function () {
+            // Base url: https://www.nationstates.net/cgi-bin/api.cgi
+            var url = this._urlObj.origin + this._urlObj.pathname + '?';
+            var params = [];
+            this._urlObj.searchParams.forEach(function (value, key) {
+                if (key === 'q') {
+                    params.push(key + "=" + decodeURIComponent(value));
+                }
+                else {
+                    params.push(key + "=" + encodeURIComponent(value));
+                }
+            });
+            return url + params.join('&');
+        },
+        enumerable: false,
+        configurable: true
+    });
     /**
      * Adds the nation to the url parameters.
      * @example .addNation('Testlandia') adds 'nation=Testlandia' to the url.
@@ -300,7 +318,7 @@ var RequestBuilder = /** @class */ (function () {
         if ( // Minimum length
         name.length < 3 ||
             // Must be alphanumeric, or only alpha, or only numeric
-            !name.match(/^([0-9]|[a-z])+([0-9a-z]+)$/i) ||
+            !name.match(/^[\w\-\s]+$/) ||
             // Last character cannot be a space
             name.slice(-1) === ' ' ||
             // Data type is string.
@@ -308,7 +326,7 @@ var RequestBuilder = /** @class */ (function () {
             throw new Error("You submitted an invalid nation name: " + name);
         }
         // Append nation to the url.
-        this._url.searchParams.append('nation', name);
+        this._urlObj.searchParams.append('nation', name);
         // Method chaining.
         return this;
     };
@@ -319,7 +337,7 @@ var RequestBuilder = /** @class */ (function () {
      */
     RequestBuilder.prototype.addRegion = function (name) {
         // Append region to the url.
-        this._url.searchParams.append('region', name);
+        this._urlObj.searchParams.append('region', name);
         // Method chaining.
         return this;
     };
@@ -338,7 +356,7 @@ var RequestBuilder = /** @class */ (function () {
             throw new Error('Invalid ID. 1 = GA, 2 = SC.');
         }
         // Append to URL.
-        this._url.searchParams.append('wa', id.toString());
+        this._urlObj.searchParams.append('wa', id.toString());
         // Method chaining.
         return this;
     };
@@ -353,7 +371,7 @@ var RequestBuilder = /** @class */ (function () {
             throw new Error("You submitted an invalid resolution ID: " + id + ". Must be a number.");
         }
         // Append to URL.
-        this._url.searchParams.append('id', id.toString());
+        this._urlObj.searchParams.append('id', id.toString());
         // Method chaining.
         return this;
     };
@@ -382,11 +400,11 @@ var RequestBuilder = /** @class */ (function () {
                 throw new Error("Invalid type of _shards. Must be a string or an array of strings.");
         }
         // Check if shards are already in the url. If yes, deletes them.
-        if (this._url.searchParams.has('q')) {
-            this._url.searchParams.delete('q');
+        if (this._urlObj.searchParams.has('q')) {
+            this._urlObj.searchParams.delete('q');
         }
         // Add shards[] to URL.
-        this._url.searchParams.append('q', this._shards.join('+'));
+        this._urlObj.searchParams.append('q', this._shards.join('+'));
         // Method chaining
         return this;
     };
@@ -398,7 +416,7 @@ var RequestBuilder = /** @class */ (function () {
      */
     RequestBuilder.prototype.addCustomParam = function (key, value) {
         // Append key and value to the url.
-        this._url.searchParams.append(key.toString(), value.toString());
+        this._urlObj.searchParams.append(key.toString(), value.toString());
         // Method chaining.
         return this;
     };
@@ -407,7 +425,7 @@ var RequestBuilder = /** @class */ (function () {
      * @example new RequestBuilder(api).addShards('numnations').removeShards()
      */
     RequestBuilder.prototype.deleteAllShards = function () {
-        this._url.searchParams.delete('q');
+        this._urlObj.searchParams.delete('q');
         this._shards.length = 0;
     };
     /**
@@ -452,7 +470,7 @@ var RequestBuilder = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                 }
@@ -559,7 +577,7 @@ var RequestBuilder = /** @class */ (function () {
      */
     RequestBuilder.prototype.resetURL = function () {
         // Resets the URL to the default.
-        this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+        this._urlObj = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
         // Empty the query string by overwriting the shards with an empty array.
         this._shards = [];
         // Method chaining
@@ -649,7 +667,7 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Password': password
@@ -697,7 +715,7 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this._authentication._xPin.toString()
@@ -791,9 +809,9 @@ var NSMethods = /** @class */ (function (_super) {
                         // Add nation
                         this.addNation(nation);
                         // Adds "a=verify" to the URL parameters.
-                        this._url.searchParams.append('a', 'verify');
+                        this._urlObj.searchParams.append('a', 'verify');
                         // Adds
-                        this._url.searchParams.append('checksum', checksum);
+                        this._urlObj.searchParams.append('checksum', checksum);
                         // Get response
                         return [4 /*yield*/, this.sendRequestAsync()];
                     case 1:
@@ -954,7 +972,6 @@ var DispatchMode;
 })(DispatchMode = exports.DispatchMode || (exports.DispatchMode = {}));
 /**
  * Future support for dispatch private commands.
- * @hidden
  */
 var Dispatch = /** @class */ (function (_super) {
     __extends(Dispatch, _super);
@@ -992,7 +1009,7 @@ var Dispatch = /** @class */ (function (_super) {
             result = true;
         }
         if (result) {
-            this._url.searchParams.append('dispatch', method);
+            this._urlObj.searchParams.append('dispatch', method);
             return;
         }
         // Otherwise, throw an error.
@@ -1008,7 +1025,7 @@ var Dispatch = /** @class */ (function (_super) {
             throw new Error('The title must be a string.');
         }
         // Append to URL.
-        this._url.searchParams.append('title', text);
+        this._urlObj.searchParams.append('title', text);
         // Method Chaining
         return this;
     };
@@ -1022,7 +1039,7 @@ var Dispatch = /** @class */ (function (_super) {
             throw new Error('The text must be a string.');
         }
         // Append to URL.
-        this._url.searchParams.append('text', text);
+        this._urlObj.searchParams.append('text', text);
         // Method Chaining
         return this;
     };
@@ -1036,7 +1053,7 @@ var Dispatch = /** @class */ (function (_super) {
             throw new Error('The category must be a number. See NationStates API documentation.');
         }
         // Set the category
-        this._url.searchParams.append('category', category.toString());
+        this._urlObj.searchParams.append('category', category.toString());
         // Method chaining
         return this;
     };
@@ -1050,7 +1067,7 @@ var Dispatch = /** @class */ (function (_super) {
             throw new Error('The category must be a number. See NationStates API documentation.');
         }
         // Set the category
-        this._url.searchParams.append('subcategory', subcategory.toString());
+        this._urlObj.searchParams.append('subcategory', subcategory.toString());
         // Method chaining
         return this;
     };
@@ -1064,11 +1081,11 @@ var Dispatch = /** @class */ (function (_super) {
             throw new Error('The dispatch ID must be a number.');
         }
         // Verify the action is edit or remove.
-        if (this._url.searchParams.get('dispatch') === 'add') {
+        if (this._urlObj.searchParams.get('dispatch') === 'add') {
             throw new Error('The dispatch ID is only set when editing or removing dispatches..');
         }
         // Append dispatch ID to URL.
-        this._url.searchParams.append('dispatchid', id.toString());
+        this._urlObj.searchParams.append('dispatchid', id.toString());
         // Method chaining
         return this;
     };
@@ -1091,7 +1108,7 @@ var Dispatch = /** @class */ (function (_super) {
                     case 2:
                         /*----- 2. Prepare Request -----*/
                         // Append prepare mode to the url to later retrieve the success token.
-                        this._url.searchParams.append('mode', 'prepare');
+                        this._urlObj.searchParams.append('mode', 'prepare');
                         // Send the request.
                         // Check rate limit.
                         return [4 /*yield*/, this.execRateLimit()];
@@ -1102,7 +1119,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _b.label = 4;
                     case 4:
                         _b.trys.push([4, 7, , 8]);
-                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this.xPin.toString()
@@ -1124,8 +1141,8 @@ var Dispatch = /** @class */ (function (_super) {
                         token = (_b.sent()).js['success'];
                         /*----- 3. Execute Request Request -----*/
                         // Replace prepare mode from the url with execute and append success token.
-                        this._url.searchParams.set('mode', 'execute');
-                        this._url.searchParams.append('token', token);
+                        this._urlObj.searchParams.set('mode', 'execute');
+                        this._urlObj.searchParams.append('token', token);
                         // Rate limit
                         return [4 /*yield*/, this.execRateLimit()];
                     case 10:
@@ -1134,7 +1151,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _b.label = 11;
                     case 11:
                         _b.trys.push([11, 14, , 15]);
-                        return [4 /*yield*/, node_fetch_1.default(this._url.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this.xPin.toString()
