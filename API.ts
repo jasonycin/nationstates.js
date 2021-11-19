@@ -181,7 +181,7 @@ export interface Response {
  */
 export class RequestBuilder {
     protected API: API;
-    public _url: URL = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+    public _urlObj: URL = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
     protected _shards: string[] = [];
     _response: Response;
 
@@ -252,6 +252,22 @@ export class RequestBuilder {
         return this._shards;
     }
 
+    public get href(): string {
+        // Base url: https://www.nationstates.net/cgi-bin/api.cgi
+        let url = this._urlObj.origin + this._urlObj.pathname + '?';
+
+        let params = [];
+        this._urlObj.searchParams.forEach((value, key) => {
+            if (key === 'q') {
+                params.push(`${key}=${decodeURIComponent(value)}`);
+            } else {
+                params.push(`${key}=${encodeURIComponent(value)}`);
+            }
+        })
+
+        return url + params.join('&');
+    }
+
     /**
      * Adds the nation to the url parameters.
      * @example .addNation('Testlandia') adds 'nation=Testlandia' to the url.
@@ -261,7 +277,7 @@ export class RequestBuilder {
         if (// Minimum length
             name.length < 3 ||
             // Must be alphanumeric, or only alpha, or only numeric
-            !name.match(/^([0-9]|[a-z])+([0-9a-z]+)$/i) ||
+            !name.match(/^[\w\-\s]+$/) ||
             // Last character cannot be a space
             name.slice(-1) === ' ' ||
             // Data type is string.
@@ -270,7 +286,7 @@ export class RequestBuilder {
         }
 
         // Append nation to the url.
-        this._url.searchParams.append('nation', name);
+        this._urlObj.searchParams.append('nation', name);
 
         // Method chaining.
         return this;
@@ -283,7 +299,7 @@ export class RequestBuilder {
      */
     public addRegion(name: string): RequestBuilder {
         // Append region to the url.
-        this._url.searchParams.append('region', name);
+        this._urlObj.searchParams.append('region', name);
 
         // Method chaining.
         return this;
@@ -306,7 +322,7 @@ export class RequestBuilder {
         }
 
         // Append to URL.
-        this._url.searchParams.append('wa', id.toString());
+        this._urlObj.searchParams.append('wa', id.toString());
 
         // Method chaining.
         return this;
@@ -324,7 +340,7 @@ export class RequestBuilder {
         }
 
         // Append to URL.
-        this._url.searchParams.append('id', id.toString());
+        this._urlObj.searchParams.append('id', id.toString());
 
         // Method chaining.
         return this;
@@ -355,12 +371,12 @@ export class RequestBuilder {
         }
 
         // Check if shards are already in the url. If yes, deletes them.
-        if (this._url.searchParams.has('q')) {
-            this._url.searchParams.delete('q');
+        if (this._urlObj.searchParams.has('q')) {
+            this._urlObj.searchParams.delete('q');
         }
 
         // Add shards[] to URL.
-        this._url.searchParams.append('q', this._shards.join('+'));
+        this._urlObj.searchParams.append('q', this._shards.join('+'));
 
         // Method chaining
         return this;
@@ -374,7 +390,7 @@ export class RequestBuilder {
      */
     public addCustomParam(key: string, value: string | number) {
         // Append key and value to the url.
-        this._url.searchParams.append(key.toString(), value.toString());
+        this._urlObj.searchParams.append(key.toString(), value.toString());
 
         // Method chaining.
         return this;
@@ -385,7 +401,7 @@ export class RequestBuilder {
      * @example new RequestBuilder(api).addShards('numnations').removeShards()
      */
     public deleteAllShards(): void {
-        this._url.searchParams.delete('q');
+        this._urlObj.searchParams.delete('q');
         this._shards.length = 0;
     }
 
@@ -416,7 +432,7 @@ export class RequestBuilder {
 
         try {
             // Send request.
-            const res = await fetch(this._url.href, {
+            const res = await fetch(this.href, {
                 headers: {
                     'User-Agent': this.API.userAgent,
                 }
@@ -492,7 +508,7 @@ export class RequestBuilder {
      */
     protected resetURL(): RequestBuilder {
         // Resets the URL to the default.
-        this._url = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+        this._urlObj = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
 
         // Empty the query string by overwriting the shards with an empty array.
         this._shards = [];
@@ -577,7 +593,7 @@ export class PrivateRequestBuilder extends RequestBuilder {
         await this.execRateLimit();
         // Send request with a x-password header set.
         try {
-            let res = await fetch(this._url.href, {
+            let res = await fetch(this.href, {
                 headers: {
                     'User-Agent': this.API.userAgent,
                     'X-Password': password
@@ -612,7 +628,7 @@ export class PrivateRequestBuilder extends RequestBuilder {
         // Send request
         try {
             // Send request.
-            const res = await fetch(this._url.href, {
+            const res = await fetch(this.href, {
                 headers: {
                     'User-Agent': this.API.userAgent,
                     'X-Pin': this._authentication._xPin.toString()
@@ -701,9 +717,9 @@ export class NSMethods extends RequestBuilder {
         // Add nation
         this.addNation(nation);
         // Adds "a=verify" to the URL parameters.
-        this._url.searchParams.append('a', 'verify');
+        this._urlObj.searchParams.append('a', 'verify');
         // Adds
-        this._url.searchParams.append('checksum', checksum);
+        this._urlObj.searchParams.append('checksum', checksum);
         // Get response
         await this.sendRequestAsync();
         // Return response as number.
@@ -868,7 +884,7 @@ export class Dispatch extends RequestBuilder {
         if (method === 'edit') { result = true; }
 
         if (result) {
-            this._url.searchParams.append('dispatch', method);
+            this._urlObj.searchParams.append('dispatch', method);
             return;
         }
 
@@ -887,7 +903,7 @@ export class Dispatch extends RequestBuilder {
         }
 
         // Append to URL.
-        this._url.searchParams.append('title', text)
+        this._urlObj.searchParams.append('title', text)
 
         // Method Chaining
         return this;
@@ -904,7 +920,7 @@ export class Dispatch extends RequestBuilder {
         }
 
         // Append to URL.
-        this._url.searchParams.append('text', text)
+        this._urlObj.searchParams.append('text', text)
 
         // Method Chaining
         return this;
@@ -921,7 +937,7 @@ export class Dispatch extends RequestBuilder {
         }
 
         // Set the category
-        this._url.searchParams.append('category', category.toString());
+        this._urlObj.searchParams.append('category', category.toString());
 
         // Method chaining
         return this;
@@ -938,7 +954,7 @@ export class Dispatch extends RequestBuilder {
         }
 
         // Set the category
-        this._url.searchParams.append('subcategory', subcategory.toString());
+        this._urlObj.searchParams.append('subcategory', subcategory.toString());
 
         // Method chaining
         return this;
@@ -955,12 +971,12 @@ export class Dispatch extends RequestBuilder {
         }
 
         // Verify the action is edit or remove.
-        if (this._url.searchParams.get('dispatch') === 'add') {
+        if (this._urlObj.searchParams.get('dispatch') === 'add') {
             throw new Error('The dispatch ID is only set when editing or removing dispatches..')
         }
 
         // Append dispatch ID to URL.
-        this._url.searchParams.append('dispatchid', id.toString());
+        this._urlObj.searchParams.append('dispatchid', id.toString());
 
         // Method chaining
         return this;
@@ -978,7 +994,7 @@ export class Dispatch extends RequestBuilder {
 
         /*----- 2. Prepare Request -----*/
         // Append prepare mode to the url to later retrieve the success token.
-        this._url.searchParams.append('mode', 'prepare');
+        this._urlObj.searchParams.append('mode', 'prepare');
 
         // Send the request.
         // Check rate limit.
@@ -987,7 +1003,7 @@ export class Dispatch extends RequestBuilder {
         // Send request
         try {
             // Send request.
-            const res = await fetch(this._url.href, {
+            const res = await fetch(this.href, {
                 headers: {
                     'User-Agent': this.API.userAgent,
                     'X-Pin': this.xPin.toString()
@@ -1006,8 +1022,8 @@ export class Dispatch extends RequestBuilder {
 
         /*----- 3. Execute Request Request -----*/
         // Replace prepare mode from the url with execute and append success token.
-        this._url.searchParams.set('mode', 'execute');
-        this._url.searchParams.append('token', token);
+        this._urlObj.searchParams.set('mode', 'execute');
+        this._urlObj.searchParams.append('token', token);
 
         // Rate limit
         await this.execRateLimit();
@@ -1015,7 +1031,7 @@ export class Dispatch extends RequestBuilder {
         // Send request
         try {
             // Send request.
-            const res = await fetch(this._url.href, {
+            const res = await fetch(this.href, {
                 headers: {
                     'User-Agent': this.API.userAgent,
                     'X-Pin': this.xPin.toString()
