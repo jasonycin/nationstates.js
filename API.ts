@@ -1,6 +1,5 @@
 // Node-fetch v.2.6.5. Still supported by developers.
 import fetch from 'node-fetch';
-import { Headers } from 'node-fetch';
 // Filesystem
 import * as fs from "fs";
 // Xml2js v.0.4.23
@@ -252,10 +251,15 @@ export class RequestBuilder {
         return this._shards;
     }
 
+    /**
+     * Builds and then returns the URL for which the request will be sent.
+     * Serves the purpose of ensuring proper URL encoding.
+     */
     public get href(): string {
         // Base url: https://www.nationstates.net/cgi-bin/api.cgi
         let url = this._urlObj.origin + this._urlObj.pathname + '?';
 
+        // Unless a query string, encode the shards.
         let params = [];
         this._urlObj.searchParams.forEach((value, key) => {
             if (key === 'q') {
@@ -265,6 +269,7 @@ export class RequestBuilder {
             }
         })
 
+        // Return the url with the shards, which had been formatted above.
         return url + params.join('&');
     }
 
@@ -689,19 +694,8 @@ export class NSMethods extends RequestBuilder {
             .sendRequestAsync())
             .convertToJSAsync();
 
-        // Extract endorsements from JObject response and convert them into an array.
-        const endorsements: string[] = r.js['endorsements'].split(',');
-
-        // Check if nation1 is endorsed by nation2.
-        for (let nation of endorsements) {
-            // Return true if nation1 is endorsed by nation2.
-            if (nation === nation1) {
-                this.resetURL();
-                return true;
-            }
-        }
-        // If nation1 is not endorsed by nation2, return false.
-        return false;
+        // Uses RegExp to verify if nation1 is in commma-seperated list of endorsements and returns the boolean.
+        return new RegExp(nation1).test(r.js['endorsements'])
     }
 
     /**
@@ -714,14 +708,18 @@ export class NSMethods extends RequestBuilder {
     public async verify(nation: string, checksum: string): Promise<number> {
         // Reset the object's URL.
         this.resetURL();
+
         // Add nation
         this.addNation(nation);
+
         // Adds "a=verify" to the URL parameters.
         this._urlObj.searchParams.append('a', 'verify');
         // Adds
         this._urlObj.searchParams.append('checksum', checksum);
+
         // Get response
         await this.sendRequestAsync();
+        
         // Return response as number.
         return parseInt(this._response.body);
     }
