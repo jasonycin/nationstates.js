@@ -292,9 +292,14 @@ var RequestBuilder = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(RequestBuilder.prototype, "href", {
+        /**
+         * Builds and then returns the URL for which the request will be sent.
+         * Serves the purpose of ensuring proper URL encoding.
+         */
         get: function () {
             // Base url: https://www.nationstates.net/cgi-bin/api.cgi
             var url = this._urlObj.origin + this._urlObj.pathname + '?';
+            // Unless a query string, encode the shards.
             var params = [];
             this._urlObj.searchParams.forEach(function (value, key) {
                 if (key === 'q') {
@@ -304,6 +309,7 @@ var RequestBuilder = /** @class */ (function () {
                     params.push(key + "=" + encodeURIComponent(value));
                 }
             });
+            // Return the url with the shards, which had been formatted above.
             return url + params.join('&');
         },
         enumerable: false,
@@ -470,7 +476,7 @@ var RequestBuilder = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                 }
@@ -667,7 +673,7 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Password': password
@@ -715,7 +721,7 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this._authentication._xPin.toString()
@@ -762,7 +768,7 @@ var NSMethods = /** @class */ (function (_super) {
      */
     NSMethods.prototype.isEndorsing = function (nation1, nation2) {
         return __awaiter(this, void 0, void 0, function () {
-            var r, endorsements, _i, endorsements_1, nation;
+            var r;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -776,18 +782,8 @@ var NSMethods = /** @class */ (function (_super) {
                             .convertToJSAsync()];
                     case 2:
                         r = _a.sent();
-                        endorsements = r.js['endorsements'].split(',');
-                        // Check if nation1 is endorsed by nation2.
-                        for (_i = 0, endorsements_1 = endorsements; _i < endorsements_1.length; _i++) {
-                            nation = endorsements_1[_i];
-                            // Return true if nation1 is endorsed by nation2.
-                            if (nation === nation1) {
-                                this.resetURL();
-                                return [2 /*return*/, true];
-                            }
-                        }
-                        // If nation1 is not endorsed by nation2, return false.
-                        return [2 /*return*/, false];
+                        // Uses RegExp to verify if nation1 is in commma-seperated list of endorsements and returns the boolean.
+                        return [2 /*return*/, new RegExp(nation1).test(r.js['endorsements'])];
                 }
             });
         });
@@ -850,7 +846,7 @@ var NSMethods = /** @class */ (function (_super) {
                     case 1:
                         // Check rate limit.
                         _a.sent();
-                        return [4 /*yield*/, node_fetch_1.default("https://www.nationstates.net/pages/" + type + ".xml.gz", {
+                        return [4 /*yield*/, (0, node_fetch_1.default)("https://www.nationstates.net/pages/" + type + ".xml.gz", {
                                 headers: {
                                     'User-Agent': this.API.userAgent
                                 }
@@ -1119,7 +1115,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _b.label = 4;
                     case 4:
                         _b.trys.push([4, 7, , 8]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this.xPin.toString()
@@ -1151,7 +1147,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _b.label = 11;
                     case 11:
                         _b.trys.push([11, 14, , 15]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this.xPin.toString()
