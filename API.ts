@@ -695,7 +695,7 @@ export class NSMethods extends RequestBuilder {
             .convertToJSAsync();
 
         // Uses RegExp to verify if nation1 is in commma-seperated list of endorsements and returns the boolean.
-        return new RegExp(nation1).test(r.js['endorsements'])
+        return new RegExp('(?:^|,)'+nation1+'(?:,|$)').test(r.js['endorsements'])
     }
 
     /**
@@ -719,7 +719,7 @@ export class NSMethods extends RequestBuilder {
 
         // Get response
         await this.sendRequestAsync();
-        
+
         // Return response as number.
         return parseInt(this._response.body);
     }
