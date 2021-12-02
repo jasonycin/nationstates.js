@@ -783,7 +783,7 @@ var NSMethods = /** @class */ (function (_super) {
                     case 2:
                         r = _a.sent();
                         // Uses RegExp to verify if nation1 is in commma-seperated list of endorsements and returns the boolean.
-                        return [2 /*return*/, new RegExp(nation1).test(r.js['endorsements'])];
+                        return [2 /*return*/, new RegExp('(?:^|,)' + nation1 + '(?:,|$)').test(r.js['endorsements'])];
                 }
             });
         });
