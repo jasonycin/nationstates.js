@@ -2,28 +2,27 @@
 --- | --- | --- | ---
 
 # Nationstates.js | API Wrapper
-### Version: 0.3.2 | [📖 Documentation](heaveria-ns.github.io/nationstates.js/)
+### Version: 0.3.3 | [📖 Documentation](heaveria-ns.github.io/nationstates.js/)
 
 Nationstates.js is a **wrapper** to ease accessing the NationStates API through **method-chaining** and other abstractions. 
 Additional **built-in methods for common tasks** are also included.
 
 This wrapper takes care of enforcing the rate limit, conversions to JS objects, and allowing usage of async/await.
 
-ㅤ   | Feature | Note
-----|---------|--------
- ✅ | Rate limit | Built-in to 650ms. Cannot be lowered.
- ✅ | Dumps | Support for easily downloading, unzipping, and converting to JSON. See [NSMethods](#nsmethods) and the [documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html#downloadDumpAsync).
- ✅ | Nations API | See [RequestBuilder](#requestbuilder).
- ✅ | Regions API | See [RequestBuilder](#requestbuilder).
- ✅ | World API | See [RequestBuilder](#requestbuilder).
- ✅ | World Assembly API | See [RequestBuilder](#requestbuilder).
- ❌ | Telegrams | Future support planned.
- ✅ | Trading Cards API | See [RequestBuilder](#requestbuilder).
- ✅ | Verification API | Built-in functions to simplify process. No support for site-specific tokens. Use [NSMethods](#nsmethods) (reccomended) or  [RequestBuilder](#requestbuilder).
- ✅ | Private shards | See [PrivateRequestBuilder](#privaterequestbuilder).
- ❌ | Private commands | Future support for dispatches planned. 
- ✅ | Built-in methods for common tasks | See [NSMethods](#nsmethods).
-
+| ㅤ   | Feature                           | Note                                                                                                                                                                                                            |
+|-----|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ✅   | Rate limit                        | Built-in to 650ms. Cannot be lowered.                                                                                                                                                                           |
+| ✅   | Dumps                             | Support for easily downloading, unzipping, and converting to JSON. See [NSMethods](#nsmethods) and the [documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html#downloadDumpAsync). |
+| ✅   | Nations API                       | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
+| ✅   | Regions API                       | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
+| ✅   | World API                         | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
+| ✅   | World Assembly API                | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
+| ❌   | Telegrams                         | Future support planned.                                                                                                                                                                                         |
+| ✅   | Trading Cards API                 | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
+| ✅   | Verification API                  | Built-in functions to simplify process. No support for site-specific tokens. Use [NSMethods](#nsmethods) (reccomended) or  [RequestBuilder](#requestbuilder).                                                   |
+| ✅   | Private shards                    | See [PrivateRequestBuilder](#privaterequestbuilder).                                                                                                                                                            |
+| ❌   | Private commands                  | Future support for dispatches planned.                                                                                                                                                                          |
+| ✅   | Built-in methods for common tasks | See [NSMethods](#nsmethods).                                                                                                                                                                                    |
 
 ## Installation / Setup
 ### 1. Installation
