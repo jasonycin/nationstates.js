@@ -6,6 +6,8 @@ import * as fs from "fs";
 import * as xml2js from 'xml2js';
 // Zlib
 import * as zlib from 'zlib';
+import {pipeline} from "stream";
+import {json} from "stream/consumers";
 
 /**
  * Required for all other classes. Defines the configuration of the wrapper and is used to enforce rate limits and user agents.
@@ -695,7 +697,7 @@ export class NSMethods extends RequestBuilder {
             .convertToJSAsync();
 
         // Uses RegExp to verify if nation1 is in commma-seperated list of endorsements and returns the boolean.
-        return new RegExp('(?:^|,)'+nation1+'(?:,|$)').test(r.js['endorsements'])
+        return new RegExp('(?:^|,)' + nation1 + '(?:,|$)').test(r.js['endorsements'])
     }
 
     /**
@@ -747,24 +749,29 @@ export class NSMethods extends RequestBuilder {
         // Set fileName with directory
         const fileName = directoryToSave + type + '.' + currentDate;
 
-        // Check rate limit.
-        await this.execRateLimit();
+        // If the dump is already present, do not download it.
+        if (!fs.existsSync(fileName + '.xml.gz')) {
+            // Check rate limit.
+            await this.execRateLimit();
 
-        // Request the file from the NationStates API.
-        const res = await fetch(`https://www.nationstates.net/pages/${type}.xml.gz`, {
-            headers: {
-                'User-Agent': this.API.userAgent
-            }
-        });
+            // Request the file from the NationStates API.
+            const res = await fetch(`https://www.nationstates.net/pages/${type}.xml.gz`, {
+                headers: {
+                    'User-Agent': this.API.userAgent
+                }
+            });
 
-        // Create a file stream to save the file.
-        const fileStream = fs.createWriteStream(fileName + '.xml.gz');
-        // Synchronously write the file to the file stream.
-        await new Promise((resolve, reject) => {
-            res.body.pipe(fileStream);
-            res.body.on("error", reject);
-            fileStream.on("finish", resolve);
-        });
+            // Create a file stream to save the file.
+            const fileStream = fs.createWriteStream(fileName + '.xml.gz');
+            // Synchronously write the file to the file stream.
+            await new Promise((resolve, reject) => {
+                res.body.pipe(fileStream);
+                res.body.on("error", reject);
+                fileStream.on("finish", resolve);
+            });
+        }
+
+
 
         if (options?.extract) {
             // Extract the file to XML.
@@ -783,12 +790,12 @@ export class NSMethods extends RequestBuilder {
 
         if (options?.deleteXMLGz) {
             // Delete the original xml.gz file.
-            fs.unlinkSync(fileName +  '.xml.gz');
+            fs.unlinkSync(fileName + '.xml.gz');
         }
 
         if (options?.deleteXML) {
             // Delete the unzipped .xml file.
-            fs.unlinkSync(fileName +  '.xml');
+            fs.unlinkSync(fileName + '.xml');
         }
 
         // Method chaining
@@ -820,7 +827,7 @@ export class NSMethods extends RequestBuilder {
      * @param savePath
      * @private
      */
-    private async xmlToJson(file: string, savePath: string): Promise<NSMethods> {
+    private async xmlToJson(file: string, savePath: string) {
         // Convert the XML file to JSON.
         let xml = fs.readFileSync(file, 'utf8');
 

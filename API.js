@@ -476,7 +476,7 @@ var RequestBuilder = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                 }
@@ -673,7 +673,7 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Password': password
@@ -721,7 +721,7 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this._authentication._xPin.toString()
@@ -830,7 +830,7 @@ var NSMethods = /** @class */ (function (_super) {
      */
     NSMethods.prototype.downloadDumpAsync = function (type, directoryToSave, options) {
         return __awaiter(this, void 0, void 0, function () {
-            var currentDate, fileName, res, fileStream;
+            var currentDate, fileName, res_1, fileStream_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -841,50 +841,53 @@ var NSMethods = /** @class */ (function (_super) {
                         }
                         currentDate = new Date().toISOString().slice(0, 10);
                         fileName = directoryToSave + type + '.' + currentDate;
+                        if (!!fs.existsSync(fileName + '.xml.gz')) return [3 /*break*/, 4];
                         // Check rate limit.
                         return [4 /*yield*/, this.execRateLimit()];
                     case 1:
                         // Check rate limit.
                         _a.sent();
-                        return [4 /*yield*/, (0, node_fetch_1.default)("https://www.nationstates.net/pages/" + type + ".xml.gz", {
+                        return [4 /*yield*/, node_fetch_1.default("https://www.nationstates.net/pages/" + type + ".xml.gz", {
                                 headers: {
                                     'User-Agent': this.API.userAgent
                                 }
                             })];
                     case 2:
-                        res = _a.sent();
-                        fileStream = fs.createWriteStream(fileName + '.xml.gz');
+                        res_1 = _a.sent();
+                        fileStream_1 = fs.createWriteStream(fileName + '.xml.gz');
                         // Synchronously write the file to the file stream.
                         return [4 /*yield*/, new Promise(function (resolve, reject) {
-                                res.body.pipe(fileStream);
-                                res.body.on("error", reject);
-                                fileStream.on("finish", resolve);
+                                res_1.body.pipe(fileStream_1);
+                                res_1.body.on("error", reject);
+                                fileStream_1.on("finish", resolve);
                             })];
                     case 3:
                         // Synchronously write the file to the file stream.
                         _a.sent();
-                        if (!(options === null || options === void 0 ? void 0 : options.extract)) return [3 /*break*/, 5];
-                        // Extract the file to XML.
-                        return [4 /*yield*/, this.gunzip(fileName + '.xml.gz', fileName + '.xml')];
+                        _a.label = 4;
                     case 4:
+                        if (!(options === null || options === void 0 ? void 0 : options.extract)) return [3 /*break*/, 6];
+                        // Extract the file to XML.
+                        return [4 /*yield*/, this.gunzip(fileName + '.xml.gz', fileName + '.xml')];
+                    case 5:
                         // Extract the file to XML.
                         _a.sent();
-                        _a.label = 5;
-                    case 5:
-                        if (!(options === null || options === void 0 ? void 0 : options.convertToJson)) return [3 /*break*/, 9];
-                        if (!!fs.existsSync(fileName + '.xml')) return [3 /*break*/, 7];
-                        return [4 /*yield*/, this.gunzip(fileName + '.xml.gz', fileName + '.xml')];
+                        _a.label = 6;
                     case 6:
+                        if (!(options === null || options === void 0 ? void 0 : options.convertToJson)) return [3 /*break*/, 10];
+                        if (!!fs.existsSync(fileName + '.xml')) return [3 /*break*/, 8];
+                        return [4 /*yield*/, this.gunzip(fileName + '.xml.gz', fileName + '.xml')];
+                    case 7:
                         _a.sent();
-                        _a.label = 7;
-                    case 7: 
+                        _a.label = 8;
+                    case 8: 
                     // Convert the XML file to JSON.
                     return [4 /*yield*/, this.xmlToJson(fileName + '.xml', fileName + '.json')];
-                    case 8:
+                    case 9:
                         // Convert the XML file to JSON.
                         _a.sent();
-                        _a.label = 9;
-                    case 9:
+                        _a.label = 10;
+                    case 10:
                         if (options === null || options === void 0 ? void 0 : options.deleteXMLGz) {
                             // Delete the original xml.gz file.
                             fs.unlinkSync(fileName + '.xml.gz');
@@ -1115,7 +1118,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _b.label = 4;
                     case 4:
                         _b.trys.push([4, 7, , 8]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this.xPin.toString()
@@ -1147,7 +1150,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _b.label = 11;
                     case 11:
                         _b.trys.push([11, 14, , 15]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this.xPin.toString()
