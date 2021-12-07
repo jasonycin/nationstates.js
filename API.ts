@@ -28,10 +28,7 @@ export class API {
         this.userAgent = userAgent; // Uses setter
 
         // If optional rate limit parameter was input.
-        if (rateLimit) {
-            // Uses setter if optional parameter was input.
-            this.rateLimit = rateLimit;
-        }
+        if (rateLimit) this.rateLimit = rateLimit;
     }
 
     /**
@@ -81,10 +78,7 @@ export class API {
      */
     set rateLimit(ms: number) {
         // Check minimum rate limit and data type.
-        if (ms < 650 || typeof (ms) !== 'number') {
-            // If true, throw error.
-            throw new Error(`You submitted an invalid rate limit: ${ms}ms. Must be equal to or higher than 650.`);
-        }
+        if (ms < 650 || typeof (ms) !== 'number') throw new Error(`You submitted an invalid rate limit: ${ms}ms. Must be equal to or higher than 650.`);
 
         // Set rate limit.
         this._rateLimit = ms;
@@ -106,10 +100,8 @@ export class API {
      */
     set lastRequestMs(ms: number) {
         // Data type checking and value checking
-        if (typeof (ms) !== 'number' || ms <= 0) {
-            // Throw Error
-            throw new Error('Parameter must be a number.')
-        }
+        if (typeof (ms) !== 'number' || ms <= 0) throw new Error('Parameter must be a number.')
+
         // Set the last request time.
         API._lastRequestMs = ms;
     }
@@ -197,9 +189,7 @@ export class RequestBuilder {
      */
     public get response(): Response {
         // Verify if response is undefined.
-        if (!this._response) {
-            throw new Error('No response found. Send a request first using sendRequestAsync()!')
-        }
+        if (!this._response) throw new Error('No response found. Send a request first using sendRequestAsync()!')
 
         return this._response;
     }
@@ -211,9 +201,7 @@ export class RequestBuilder {
      */
     public get body(): string | number {
         // Verifies if a response has been recieved.
-        if (!this._response) {
-            throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?')
-        }
+        if (!this._response) throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?')
 
         // If the body is a number, convert the string to a number and return it, else return the body as is.
         return !isNaN(this._response.body) ? parseInt(this._response.body) : this._response.body;
@@ -227,9 +215,7 @@ export class RequestBuilder {
      */
     public get js(): object {
         // Verify if the response has been converted to js.
-        if (!this._response.js) {
-            throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent..')
-        }
+        if (!this._response.js) throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent..')
 
         return this._response.js;
     }
@@ -240,14 +226,10 @@ export class RequestBuilder {
      */
     public get shards(): string | string[] {
         // Verifies if shards have been added.
-        if (!this._shards) {
-            throw new Error('No shards have been added.')
-        }
+        if (!this._shards) throw new Error('No shards have been added.')
 
         // If there is only a single shard, return it.
-        if (this._shards.length === 1) {
-            return this._shards[0];
-        }
+        if (this._shards.length === 1) return this._shards[0];
 
         // Returns the array of shards.
         return this._shards;
@@ -319,14 +301,10 @@ export class RequestBuilder {
      */
     public addCouncilID(id: CouncilID): RequestBuilder {
         // Type-checking
-        if (typeof (id) !== 'number') {
-            throw new Error(`You submitted an invalid council ID: ${id}. Must be a number.`);
-        }
+        if (typeof (id) !== 'number') throw new Error(`You submitted an invalid council ID: ${id}. Must be a number.`);
 
         // Verify if ID matches NationStates API specifications.
-        if (id > 2 || id < 0) {
-            throw new Error('Invalid ID. 1 = GA, 2 = SC.')
-        }
+        if (id > 2 || id < 0) throw new Error('Invalid ID. 1 = GA, 2 = SC.')
 
         // Append to URL.
         this._urlObj.searchParams.append('wa', id.toString());
@@ -342,9 +320,7 @@ export class RequestBuilder {
      */
     public addResolutionID(id: number): RequestBuilder {
         // Type-checking
-        if (typeof (id) !== 'number') {
-            throw new Error(`You submitted an invalid resolution ID: ${id}. Must be a number.`);
-        }
+        if (typeof (id) !== 'number') throw new Error(`You submitted an invalid resolution ID: ${id}. Must be a number.`);
 
         // Append to URL.
         this._urlObj.searchParams.append('id', id.toString());
@@ -365,6 +341,7 @@ export class RequestBuilder {
             case "string":
                 this._shards.push(shards);
                 break;
+
             // If array of strings, then push each string to _shards[].
             case "object":
                 // Iterate over each shard.
@@ -372,15 +349,14 @@ export class RequestBuilder {
                     this._shards.push(shard);
                 }
                 break;
+
             // Error handling
             default:
                 throw new Error("Invalid type of _shards. Must be a string or an array of strings.");
         }
 
         // Check if shards are already in the url. If yes, deletes them.
-        if (this._urlObj.searchParams.has('q')) {
-            this._urlObj.searchParams.delete('q');
-        }
+        if (this._urlObj.searchParams.has('q')) this._urlObj.searchParams.delete('q');
 
         // Add shards[] to URL.
         this._urlObj.searchParams.append('q', this._shards.join('+'));
@@ -462,6 +438,7 @@ export class RequestBuilder {
     protected async logRequest(res): Promise<void> {
         // Record the unix timestamp of the request for rate limiting.
         this.API.lastRequestMs = Date.now();
+
         // Handle Response
         this._response = {
             fetchResponse: res,
@@ -474,9 +451,7 @@ export class RequestBuilder {
 
     public async convertToJSAsync(): Promise<RequestBuilder> {
         // Verifies if the a response has been set.
-        if (!this._response.body) {
-            throw new Error("No response body could be found. You can examine the response body by doing: ")
-        }
+        if (!this._response.body) throw new Error("No response body could be found. You can examine the response body by doing: ")
 
         // Attempts to parse the XML into a JSON object.
         try {
@@ -598,6 +573,7 @@ export class PrivateRequestBuilder extends RequestBuilder {
     private async getXPin(password: string): Promise<number> {
         // Check rate limit
         await this.execRateLimit();
+
         // Send request with a x-password header set.
         try {
             let res = await fetch(this.href, {
@@ -606,11 +582,13 @@ export class PrivateRequestBuilder extends RequestBuilder {
                     'X-Password': password
                 }
             });
+
             // Log request and update rate limit.
             await this.logRequest(res);
             // Return the x-pin header.
             return res.headers.get('x-pin');
-            // Error handling.
+
+        // Error handling.
         } catch (err) {
             // Throw error.
             throw new Error(err);
@@ -625,9 +603,7 @@ export class PrivateRequestBuilder extends RequestBuilder {
      */
     public async sendRequestAsync(): Promise<RequestBuilder> {
         // Verifies that the authentication object is set.
-        if (!this._authentication.status) {
-            throw new Error('You must first authenticate! Run authenticate() on your private request before sending it.')
-        }
+        if (!this._authentication.status) throw new Error('You must first authenticate! Run authenticate() on your private request before sending it.')
 
         // Check rate limit.
         await this.execRateLimit();
@@ -744,9 +720,7 @@ export class NSMethods extends RequestBuilder {
     public async downloadDumpAsync(type: string, directoryToSave: string, options?: DumpOptions): Promise<NSMethods> {
         // TODO: Implement decoding utf-8 within the dump.
         // Verify if type is correct
-        if (type !== 'nations' && type !== 'regions') {
-            throw new Error('Type must be either "nation" or "region"');
-        }
+        if (type !== 'nations' && type !== 'regions') throw new Error('Type must be either "nation" or "region"');
 
         // Get current date as YYYY-MM-DD
         const currentDate = new Date().toISOString().slice(0, 10);
@@ -776,32 +750,19 @@ export class NSMethods extends RequestBuilder {
             });
         }
 
-
-
-        if (options?.extract) {
-            // Extract the file to XML.
-            await this.gunzip(fileName + '.xml.gz', fileName + '.xml');
-        }
+        if (options?.extract) await this.gunzip(fileName + '.xml.gz', fileName + '.xml');
 
         if (options?.convertToJson) {
             // Verify the XML file has been unzipped. If not, do so.
-            if (!fs.existsSync(fileName + '.xml')) {
-                await this.gunzip(fileName + '.xml.gz', fileName + '.xml');
-            }
+            if (!fs.existsSync(fileName + '.xml')) await this.gunzip(fileName + '.xml.gz', fileName + '.xml');
 
             // Convert the XML file to JSON.
             await this.xmlToJson(fileName + '.xml', fileName + '.json');
         }
 
-        if (options?.deleteXMLGz) {
-            // Delete the original xml.gz file.
-            fs.unlinkSync(fileName + '.xml.gz');
-        }
+        if (options?.deleteXMLGz) fs.unlinkSync(fileName + '.xml.gz');
 
-        if (options?.deleteXML) {
-            // Delete the unzipped .xml file.
-            fs.unlinkSync(fileName + '.xml');
-        }
+        if (options?.deleteXML) fs.unlinkSync(fileName + '.xml');
 
         // Method chaining
         return this;
@@ -821,6 +782,7 @@ export class NSMethods extends RequestBuilder {
                 resolve('Finished unzipping.');
             })
         });
+
         // Method chaining
         return this;
     }
@@ -880,9 +842,7 @@ export class Dispatch extends RequestBuilder {
      * @param method
      */
     private addAction(method: string): Boolean | Error {
-        if (typeof method !== 'string') {
-            throw new Error('Action must be a string.');
-        }
+        if (typeof method !== 'string') throw new Error('Action must be a string.');
 
         // Standardize
         method = method.toLowerCase().trim();
@@ -908,9 +868,7 @@ export class Dispatch extends RequestBuilder {
      */
     public title(text: string) {
         // Type-checking
-        if (typeof text !== 'string') {
-            throw new Error('The title must be a string.');
-        }
+        if (typeof text !== 'string') throw new Error('The title must be a string.');
 
         // Append to URL.
         this._urlObj.searchParams.append('title', text)
@@ -925,9 +883,7 @@ export class Dispatch extends RequestBuilder {
      */
     public text(text: string) {
         // Type-checking
-        if (typeof text !== 'string') {
-            throw new Error('The text must be a string.');
-        }
+        if (typeof text !== 'string') throw new Error('The text must be a string.');
 
         // Append to URL.
         this._urlObj.searchParams.append('text', text)
@@ -942,9 +898,7 @@ export class Dispatch extends RequestBuilder {
      */
     public category(category: number) {
         // Type-checking
-        if (typeof (category) !== 'number') {
-            throw new Error('The category must be a number. See NationStates API documentation.')
-        }
+        if (typeof (category) !== 'number') throw new Error('The category must be a number. See NationStates API documentation.')
 
         // Set the category
         this._urlObj.searchParams.append('category', category.toString());
@@ -959,9 +913,7 @@ export class Dispatch extends RequestBuilder {
      */
     public subcategory(subcategory: number) {
         // Type-checking
-        if (typeof (subcategory) !== 'number') {
-            throw new Error('The category must be a number. See NationStates API documentation.')
-        }
+        if (typeof (subcategory) !== 'number') throw new Error('The category must be a number. See NationStates API documentation.')
 
         // Set the category
         this._urlObj.searchParams.append('subcategory', subcategory.toString());
@@ -976,14 +928,10 @@ export class Dispatch extends RequestBuilder {
      */
     public dispatchID(id: number) {
         // Type-checking
-        if (typeof (id) !== 'number') {
-            throw new Error('The dispatch ID must be a number.')
-        }
+        if (typeof (id) !== 'number') throw new Error('The dispatch ID must be a number.')
 
         // Verify the action is edit or remove.
-        if (this._urlObj.searchParams.get('dispatch') === 'add') {
-            throw new Error('The dispatch ID is only set when editing or removing dispatches..')
-        }
+        if (this._urlObj.searchParams.get('dispatch') === 'add') throw new Error('The dispatch ID is only set when editing or removing dispatches..')
 
         // Append dispatch ID to URL.
         this._urlObj.searchParams.append('dispatchid', id.toString());
@@ -998,9 +946,7 @@ export class Dispatch extends RequestBuilder {
      */
     public async executeAsync(): Promise<boolean> {
         /*----- 1. Retrieve the x-pin -----*/
-        if (this.xPin === undefined) {
-            this.xPin = (await new PrivateRequestBuilder(this.API).authenticate(this.nation, this.password))._authentication._xPin;
-        }
+        if (this.xPin === undefined) this.xPin = (await new PrivateRequestBuilder(this.API).authenticate(this.nation, this.password))._authentication._xPin;
 
         /*----- 2. Prepare Request -----*/
         // Append prepare mode to the url to later retrieve the success token.
