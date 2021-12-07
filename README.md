@@ -1,10 +1,10 @@
-[![CodeQL](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml)  | ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) | ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJIDEA-000000.svg?style=for-the-badge&logo=intellij-idea&logoColor=white) | ![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
---- | --- | --- | ---
+| [![CodeQL](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml) | ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) | ![IntelliJJ IDEA](https://img.shields.io/badge/IntelliJIDEA-000000.svg?style=for-the-badge&logo=intellij-idea&logoColor=white) | ![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white) |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
 
-# Nationstates.js | API Wrapper
-### Version: 0.3.3 | [📖 Documentation](heaveria-ns.github.io/nationstates.js/)
+# NationStates.js | API Wrapper
+### Version: 0.3.3 | [📖 Documentation](https://heaveria-ns.github.io/nationstates.js/)
 
-Nationstates.js is a **wrapper** to ease accessing the NationStates API through **method-chaining** and other abstractions. 
+NationsStates.js is a **wrapper** to ease accessing the NationStates API through **method-chaining** and other abstractions. 
 Additional **built-in methods for common tasks** are also included.
 
 This wrapper takes care of enforcing the rate limit, conversions to JS objects, and allowing usage of async/await.
@@ -19,22 +19,22 @@ This wrapper takes care of enforcing the rate limit, conversions to JS objects, 
 | ✅   | World Assembly API                | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
 | ❌   | Telegrams                         | Future support planned.                                                                                                                                                                                         |
 | ✅   | Trading Cards API                 | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
-| ✅   | Verification API                  | Built-in functions to simplify process. No support for site-specific tokens. Use [NSMethods](#nsmethods) (reccomended) or  [RequestBuilder](#requestbuilder).                                                   |
+| ✅   | Verification API                  | Built-in functions to simplify process. No support for site-specific tokens. Use [NSMethods](#nsmethods) (recommended) or  [RequestBuilder](#requestbuilder).                                                   |
 | ✅   | Private shards                    | See [PrivateRequestBuilder](#privaterequestbuilder).                                                                                                                                                            |
 | ❌   | Private commands                  | Future support for dispatches planned.                                                                                                                                                                          |
 | ✅   | Built-in methods for common tasks | See [NSMethods](#nsmethods).                                                                                                                                                                                    |
 
 ## Installation / Setup
 ### 1. Installation
-While in your projects' directory run the following command in the terminal to install the libary:
+While in your projects' directory run the following command in the terminal to install the library:
 ```
 npm i nationstates.js
 ```
 
 ### 2. Import/Require the library
 ```TypeScript
-// For TypeScript, you should use the following import statement:
-import * as ns from 'nationstates.js';
+// For TypeScript, you should use the following import statement (Recommended):
+import * as ns from 'nationstates.js/API';
 
 // For standard JavaScript:
 const ns = require('nationstates.js');
@@ -104,41 +104,35 @@ console.log(req1.js['population']); // 39561
 ➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/PrivateRequestBuilder.html)
 
 ### Instructions
-This clsss extends the [RequestBuilder](#requestbuilder) and functions the same.  
+This class extends the [RequestBuilder](#requestbuilder) and functions the same.  
 But in order to send any request, you must **first authenticate()** 
 in order to get the x-pin and allow for quick repeated requests:
 
 ```TypeScript
-// Instantiate and authenticate all-in-one.
-const privReq = new ns.PrivateRequestBuilder(api, 'nation', 'password');
-
-/*---OR---*/
-
-// Instantiate object and THEN authenticate.
 const privReq = new ns.PrivateRequestBuilder(api);
-privReq.authenticate('nation', 'password'); // You can re-authenticate. Reccomended to create a new object though.
+// You must authenticate. This retrieves the x-pin and allows for quick repeated requests.
+privReq.authenticate('nation', 'password')
 ```
 
 ### Notice
 ⚠️⛔️ **Will not work if you did not authenticate().**
 
-
 ## NSMethods
 ➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html)
 
-Feature | Purpose
--------|--------
-`verify(checksum)` | [Verify](https://www.nationstates.net/pages/api.html#verification) the checksum of a nation using. Returns a 0 or 1.
-`downloadDumpAsync(type, directory, options{})` | Download data dumps. For options, see [DumpOptions](https://heaveria-ns.github.io/nationstates.js/interfaces/DumpOptions.html).
-`isEndorsing(nation1, nation2)` | Verifies if `nation1` is endorsing `nation2`. Returns a boolean.
+| Feature                                        | Purpose                                                                                                                         |
+|------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| `verify(nation, checksum)`                     | [Verify](https://www.nationstates.net/pages/api.html#verification) the checksum of a nation using. Returns a 0 or 1.            |
+| `downloadDumpAsync(type, directory, options?)` | Download data dumps. For options, see [DumpOptions](https://heaveria-ns.github.io/nationstates.js/interfaces/DumpOptions.html). |
+| `isEndorsing(nation1, nation2)`                | Verifies if `nation1` is endorsing `nation2`. Returns a boolean.                                                                |
 
 ### Usage Example:
 ```TypeScript
-const nsfun = new ns.NSMethods(api);
+const nsFun = new ns.NSMethods(api);
 
-let endoResult = await nsfun.isEndorsing('Testlandia', 'Olvaria');
+let endoResult = await nsFun.isEndorsing('Testlandia', 'Olvaria'); // Is Testlandia endorsing Olvaria?
 
-console.log(endoResult) // false
+console.log(endoResult) // 0
 ```
 
 
