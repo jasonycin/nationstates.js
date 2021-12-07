@@ -706,8 +706,9 @@ export class NSMethods extends RequestBuilder {
      * @example console.log(await methods.verify('Testlandia', '12345')); // 0
      * @param nation
      * @param checksum
+     * @param siteSpecificToken
      */
-    public async verify(nation: string, checksum: string): Promise<number> {
+    public async verify(nation: string, checksum: string, siteSpecificToken?: string): Promise<number> {
         // Reset the object's URL.
         this.resetURL();
 
@@ -716,8 +717,12 @@ export class NSMethods extends RequestBuilder {
 
         // Adds "a=verify" to the URL parameters.
         this._urlObj.searchParams.append('a', 'verify');
-        // Adds
+        // Adds checksum
         this._urlObj.searchParams.append('checksum', checksum);
+        // Adds site specific token if it is set.
+        if (siteSpecificToken) {
+            this._urlObj.searchParams.append('token', siteSpecificToken);
+        }
 
         // Get response
         await this.sendRequestAsync();

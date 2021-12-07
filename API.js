@@ -794,8 +794,9 @@ var NSMethods = /** @class */ (function (_super) {
      * @example console.log(await methods.verify('Testlandia', '12345')); // 0
      * @param nation
      * @param checksum
+     * @param siteSpecificToken
      */
-    NSMethods.prototype.verify = function (nation, checksum) {
+    NSMethods.prototype.verify = function (nation, checksum, siteSpecificToken) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -806,8 +807,12 @@ var NSMethods = /** @class */ (function (_super) {
                         this.addNation(nation);
                         // Adds "a=verify" to the URL parameters.
                         this._urlObj.searchParams.append('a', 'verify');
-                        // Adds
+                        // Adds checksum
                         this._urlObj.searchParams.append('checksum', checksum);
+                        // Adds site specific token if it is set.
+                        if (siteSpecificToken) {
+                            this._urlObj.searchParams.append('token', siteSpecificToken);
+                        }
                         // Get response
                         return [4 /*yield*/, this.sendRequestAsync()];
                     case 1:
