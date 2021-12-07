@@ -111,7 +111,7 @@ in order to get the x-pin and allow for quick repeated requests:
 ```TypeScript
 const privReq = new ns.PrivateRequestBuilder(api);
 // You must authenticate. This retrieves the x-pin and allows for quick repeated requests.
-privReq.authenticate('nation', 'password')
+await privReq.authenticate('nation', 'password')
 ```
 
 ### Notice
