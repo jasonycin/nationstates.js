@@ -74,10 +74,8 @@ var API = /** @class */ (function () {
         this._rateLimit = 650;
         this.userAgent = userAgent; // Uses setter
         // If optional rate limit parameter was input.
-        if (rateLimit) {
-            // Uses setter if optional parameter was input.
+        if (rateLimit)
             this.rateLimit = rateLimit;
-        }
     }
     Object.defineProperty(API.prototype, "userAgent", {
         /**
@@ -127,10 +125,8 @@ var API = /** @class */ (function () {
          */
         set: function (ms) {
             // Check minimum rate limit and data type.
-            if (ms < 650 || typeof (ms) !== 'number') {
-                // If true, throw error.
+            if (ms < 650 || typeof (ms) !== 'number')
                 throw new Error("You submitted an invalid rate limit: " + ms + "ms. Must be equal to or higher than 650.");
-            }
             // Set rate limit.
             this._rateLimit = ms;
         },
@@ -153,10 +149,8 @@ var API = /** @class */ (function () {
          */
         set: function (ms) {
             // Data type checking and value checking
-            if (typeof (ms) !== 'number' || ms <= 0) {
-                // Throw Error
+            if (typeof (ms) !== 'number' || ms <= 0)
                 throw new Error('Parameter must be a number.');
-            }
             // Set the last request time.
             API._lastRequestMs = ms;
         },
@@ -230,9 +224,8 @@ var RequestBuilder = /** @class */ (function () {
          */
         get: function () {
             // Verify if response is undefined.
-            if (!this._response) {
+            if (!this._response)
                 throw new Error('No response found. Send a request first using sendRequestAsync()!');
-            }
             return this._response;
         },
         enumerable: false,
@@ -245,9 +238,8 @@ var RequestBuilder = /** @class */ (function () {
          */
         get: function () {
             // Verifies if a response has been recieved.
-            if (!this._response) {
+            if (!this._response)
                 throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?');
-            }
             // If the body is a number, convert the string to a number and return it, else return the body as is.
             return !isNaN(this._response.body) ? parseInt(this._response.body) : this._response.body;
         },
@@ -263,9 +255,8 @@ var RequestBuilder = /** @class */ (function () {
          */
         get: function () {
             // Verify if the response has been converted to js.
-            if (!this._response.js) {
+            if (!this._response.js)
                 throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent..');
-            }
             return this._response.js;
         },
         enumerable: false,
@@ -278,13 +269,11 @@ var RequestBuilder = /** @class */ (function () {
          */
         get: function () {
             // Verifies if shards have been added.
-            if (!this._shards) {
+            if (!this._shards)
                 throw new Error('No shards have been added.');
-            }
             // If there is only a single shard, return it.
-            if (this._shards.length === 1) {
+            if (this._shards.length === 1)
                 return this._shards[0];
-            }
             // Returns the array of shards.
             return this._shards;
         },
@@ -354,13 +343,11 @@ var RequestBuilder = /** @class */ (function () {
      */
     RequestBuilder.prototype.addCouncilID = function (id) {
         // Type-checking
-        if (typeof (id) !== 'number') {
+        if (typeof (id) !== 'number')
             throw new Error("You submitted an invalid council ID: " + id + ". Must be a number.");
-        }
         // Verify if ID matches NationStates API specifications.
-        if (id > 2 || id < 0) {
+        if (id > 2 || id < 0)
             throw new Error('Invalid ID. 1 = GA, 2 = SC.');
-        }
         // Append to URL.
         this._urlObj.searchParams.append('wa', id.toString());
         // Method chaining.
@@ -373,9 +360,8 @@ var RequestBuilder = /** @class */ (function () {
      */
     RequestBuilder.prototype.addResolutionID = function (id) {
         // Type-checking
-        if (typeof (id) !== 'number') {
+        if (typeof (id) !== 'number')
             throw new Error("You submitted an invalid resolution ID: " + id + ". Must be a number.");
-        }
         // Append to URL.
         this._urlObj.searchParams.append('id', id.toString());
         // Method chaining.
@@ -406,9 +392,8 @@ var RequestBuilder = /** @class */ (function () {
                 throw new Error("Invalid type of _shards. Must be a string or an array of strings.");
         }
         // Check if shards are already in the url. If yes, deletes them.
-        if (this._urlObj.searchParams.has('q')) {
+        if (this._urlObj.searchParams.has('q'))
             this._urlObj.searchParams.delete('q');
-        }
         // Add shards[] to URL.
         this._urlObj.searchParams.append('q', this._shards.join('+'));
         // Method chaining
@@ -538,9 +523,8 @@ var RequestBuilder = /** @class */ (function () {
                 switch (_b.label) {
                     case 0:
                         // Verifies if the a response has been set.
-                        if (!this._response.body) {
+                        if (!this._response.body)
                             throw new Error("No response body could be found. You can examine the response body by doing: ");
-                        }
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 3, , 4]);
@@ -710,9 +694,8 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                 switch (_a.label) {
                     case 0:
                         // Verifies that the authentication object is set.
-                        if (!this._authentication.status) {
+                        if (!this._authentication.status)
                             throw new Error('You must first authenticate! Run authenticate() on your private request before sending it.');
-                        }
                         // Check rate limit.
                         return [4 /*yield*/, this.execRateLimit()];
                     case 1:
@@ -841,9 +824,8 @@ var NSMethods = /** @class */ (function (_super) {
                     case 0:
                         // TODO: Implement decoding utf-8 within the dump.
                         // Verify if type is correct
-                        if (type !== 'nations' && type !== 'regions') {
+                        if (type !== 'nations' && type !== 'regions')
                             throw new Error('Type must be either "nation" or "region"');
-                        }
                         currentDate = new Date().toISOString().slice(0, 10);
                         fileName = directoryToSave + type + '.' + currentDate;
                         if (!!fs.existsSync(fileName + '.xml.gz')) return [3 /*break*/, 4];
@@ -872,10 +854,8 @@ var NSMethods = /** @class */ (function (_super) {
                         _a.label = 4;
                     case 4:
                         if (!(options === null || options === void 0 ? void 0 : options.extract)) return [3 /*break*/, 6];
-                        // Extract the file to XML.
                         return [4 /*yield*/, this.gunzip(fileName + '.xml.gz', fileName + '.xml')];
                     case 5:
-                        // Extract the file to XML.
                         _a.sent();
                         _a.label = 6;
                     case 6:
@@ -893,14 +873,10 @@ var NSMethods = /** @class */ (function (_super) {
                         _a.sent();
                         _a.label = 10;
                     case 10:
-                        if (options === null || options === void 0 ? void 0 : options.deleteXMLGz) {
-                            // Delete the original xml.gz file.
+                        if (options === null || options === void 0 ? void 0 : options.deleteXMLGz)
                             fs.unlinkSync(fileName + '.xml.gz');
-                        }
-                        if (options === null || options === void 0 ? void 0 : options.deleteXML) {
-                            // Delete the unzipped .xml file.
+                        if (options === null || options === void 0 ? void 0 : options.deleteXML)
                             fs.unlinkSync(fileName + '.xml');
-                        }
                         // Method chaining
                         return [2 /*return*/, this];
                 }
@@ -996,9 +972,8 @@ var Dispatch = /** @class */ (function (_super) {
      * @param method
      */
     Dispatch.prototype.addAction = function (method) {
-        if (typeof method !== 'string') {
+        if (typeof method !== 'string')
             throw new Error('Action must be a string.');
-        }
         // Standardize
         method = method.toLowerCase().trim();
         // Only allow add, remove, and edit.
@@ -1025,9 +1000,8 @@ var Dispatch = /** @class */ (function (_super) {
      */
     Dispatch.prototype.title = function (text) {
         // Type-checking
-        if (typeof text !== 'string') {
+        if (typeof text !== 'string')
             throw new Error('The title must be a string.');
-        }
         // Append to URL.
         this._urlObj.searchParams.append('title', text);
         // Method Chaining
@@ -1039,9 +1013,8 @@ var Dispatch = /** @class */ (function (_super) {
      */
     Dispatch.prototype.text = function (text) {
         // Type-checking
-        if (typeof text !== 'string') {
+        if (typeof text !== 'string')
             throw new Error('The text must be a string.');
-        }
         // Append to URL.
         this._urlObj.searchParams.append('text', text);
         // Method Chaining
@@ -1053,9 +1026,8 @@ var Dispatch = /** @class */ (function (_super) {
      */
     Dispatch.prototype.category = function (category) {
         // Type-checking
-        if (typeof (category) !== 'number') {
+        if (typeof (category) !== 'number')
             throw new Error('The category must be a number. See NationStates API documentation.');
-        }
         // Set the category
         this._urlObj.searchParams.append('category', category.toString());
         // Method chaining
@@ -1067,9 +1039,8 @@ var Dispatch = /** @class */ (function (_super) {
      */
     Dispatch.prototype.subcategory = function (subcategory) {
         // Type-checking
-        if (typeof (subcategory) !== 'number') {
+        if (typeof (subcategory) !== 'number')
             throw new Error('The category must be a number. See NationStates API documentation.');
-        }
         // Set the category
         this._urlObj.searchParams.append('subcategory', subcategory.toString());
         // Method chaining
@@ -1081,13 +1052,11 @@ var Dispatch = /** @class */ (function (_super) {
      */
     Dispatch.prototype.dispatchID = function (id) {
         // Type-checking
-        if (typeof (id) !== 'number') {
+        if (typeof (id) !== 'number')
             throw new Error('The dispatch ID must be a number.');
-        }
         // Verify the action is edit or remove.
-        if (this._urlObj.searchParams.get('dispatch') === 'add') {
+        if (this._urlObj.searchParams.get('dispatch') === 'add')
             throw new Error('The dispatch ID is only set when editing or removing dispatches..');
-        }
         // Append dispatch ID to URL.
         this._urlObj.searchParams.append('dispatchid', id.toString());
         // Method chaining
