@@ -3,20 +3,20 @@
 <tr>
 <th><a href="https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml"><img src="https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL"></a></th>
 <th><img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></th>
-<th><img src="https://img.shields.io/badge/IntelliJIDEA-000000.svg?style=for-the-badge&logo=intellij-idea&logoColor=white" alt="IntelliJ IDEA"></th>
+<th><img src="https://img.shields.io/badge/IntelliJIDEA-000000.svg?style=for-the-badge&logo=intellij-idea&logoColor=white" alt="IntelliJJ IDEA"></th>
 <th><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"></th>
 </tr>
 </thead>
 </table>
 
 <a href="#nationstatesjs--api-wrapper" id="nationstatesjs--api-wrapper" style="color: inherit; text-decoration: none;">
-  <h1>Nationstates.js | API Wrapper</h1>
+  <h1>NationStates.js | API Wrapper</h1>
 </a>
 
 <a href="#version-033--📖-documentation" id="version-033--📖-documentation" style="color: inherit; text-decoration: none;">
-  <h3>Version: 0.3.3 | <a href="heaveria-ns.github.io/nationstates.js/">📖 Documentation</a></h3>
+  <h3>Version: 0.3.3 | <a href="https://heaveria-ns.github.io/nationstates.js/">📖 Documentation</a></h3>
 </a>
-<p>Nationstates.js is a <strong>wrapper</strong> to ease accessing the NationStates API through <strong>method-chaining</strong> and other abstractions. 
+<p>NationsStates.js is a <strong>wrapper</strong> to ease accessing the NationStates API through <strong>method-chaining</strong> and other abstractions. 
 Additional <strong>built-in methods for common tasks</strong> are also included.</p>
 <p>This wrapper takes care of enforcing the rate limit, conversions to JS objects, and allowing usage of async/await.</p>
 <table>
@@ -70,7 +70,7 @@ Additional <strong>built-in methods for common tasks</strong> are also included.
 <tr>
 <td>✅</td>
 <td>Verification API</td>
-<td>Built-in functions to simplify process. No support for site-specific tokens. Use <a href="#nsmethods">NSMethods</a> (reccomended) or  <a href="#requestbuilder">RequestBuilder</a>.</td>
+<td>Built-in functions to simplify process. No support for site-specific tokens. Use <a href="#nsmethods">NSMethods</a> (recommended) or  <a href="#requestbuilder">RequestBuilder</a>.</td>
 </tr>
 <tr>
 <td>✅</td>
@@ -96,14 +96,14 @@ Additional <strong>built-in methods for common tasks</strong> are also included.
 <a href="#1-installation" id="1-installation" style="color: inherit; text-decoration: none;">
   <h3>1. Installation</h3>
 </a>
-<p>While in your projects&#39; directory run the following command in the terminal to install the libary:</p>
+<p>While in your projects&#39; directory run the following command in the terminal to install the library:</p>
 <pre><code><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">i</span><span class="hl-1"> </span><span class="hl-0">nationstates</span><span class="hl-1">.</span><span class="hl-0">js</span>
 </code></pre>
 
 <a href="#2-importrequire-the-library" id="2-importrequire-the-library" style="color: inherit; text-decoration: none;">
   <h3>2. Import/Require the library</h3>
 </a>
-<pre><code class="language-TypeScript"><span class="hl-2">// For TypeScript, you should use the following import statement:</span><br/><span class="hl-3">import</span><span class="hl-1"> </span><span class="hl-4">*</span><span class="hl-1"> </span><span class="hl-3">as</span><span class="hl-1"> </span><span class="hl-0">ns</span><span class="hl-1"> </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-5">&#39;nationstates.js&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-2">// For standard JavaScript:</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">ns</span><span class="hl-1"> = </span><span class="hl-7">require</span><span class="hl-1">(</span><span class="hl-5">&#39;nationstates.js&#39;</span><span class="hl-1">);</span>
+<pre><code class="language-TypeScript"><span class="hl-2">// For TypeScript, you should use the following import statement (Recommended):</span><br/><span class="hl-3">import</span><span class="hl-1"> </span><span class="hl-4">*</span><span class="hl-1"> </span><span class="hl-3">as</span><span class="hl-1"> </span><span class="hl-0">ns</span><span class="hl-1"> </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-5">&#39;nationstates.js/API&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-2">// For standard JavaScript:</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">ns</span><span class="hl-1"> = </span><span class="hl-7">require</span><span class="hl-1">(</span><span class="hl-5">&#39;nationstates.js&#39;</span><span class="hl-1">);</span>
 </code></pre>
 
 <a href="#3-initialize" id="3-initialize" style="color: inherit; text-decoration: none;">
@@ -151,9 +151,9 @@ Additional <strong>built-in methods for common tasks</strong> are also included.
 <a href="#instructions" id="instructions" style="color: inherit; text-decoration: none;">
   <h3>Instructions</h3>
 </a>
-<p>This clsss extends the <a href="#requestbuilder">RequestBuilder</a> and functions the same.<br>But in order to send any request, you must <strong>first authenticate()</strong> 
+<p>This class extends the <a href="#requestbuilder">RequestBuilder</a> and functions the same.<br>But in order to send any request, you must <strong>first authenticate()</strong> 
 in order to get the x-pin and allow for quick repeated requests:</p>
-<pre><code class="language-TypeScript"><span class="hl-2">// Instantiate and authenticate all-in-one.</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">privReq</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-0">ns</span><span class="hl-1">.</span><span class="hl-7">PrivateRequestBuilder</span><span class="hl-1">(</span><span class="hl-0">api</span><span class="hl-1">, </span><span class="hl-5">&#39;nation&#39;</span><span class="hl-1">, </span><span class="hl-5">&#39;password&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-2">/*---OR---*/</span><br/><br/><span class="hl-2">// Instantiate object and THEN authenticate.</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">privReq</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-0">ns</span><span class="hl-1">.</span><span class="hl-7">PrivateRequestBuilder</span><span class="hl-1">(</span><span class="hl-0">api</span><span class="hl-1">);</span><br/><span class="hl-0">privReq</span><span class="hl-1">.</span><span class="hl-7">authenticate</span><span class="hl-1">(</span><span class="hl-5">&#39;nation&#39;</span><span class="hl-1">, </span><span class="hl-5">&#39;password&#39;</span><span class="hl-1">); </span><span class="hl-2">// You can re-authenticate. Reccomended to create a new object though.</span>
+<pre><code class="language-TypeScript"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">privReq</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-0">ns</span><span class="hl-1">.</span><span class="hl-7">PrivateRequestBuilder</span><span class="hl-1">(</span><span class="hl-0">api</span><span class="hl-1">);</span><br/><span class="hl-2">// You must authenticate. This retrieves the x-pin and allows for quick repeated requests.</span><br/><span class="hl-0">privReq</span><span class="hl-1">.</span><span class="hl-7">authenticate</span><span class="hl-1">(</span><span class="hl-5">&#39;nation&#39;</span><span class="hl-1">, </span><span class="hl-5">&#39;password&#39;</span><span class="hl-1">)</span>
 </code></pre>
 
 <a href="#notice" id="notice" style="color: inherit; text-decoration: none;">
@@ -173,11 +173,11 @@ in order to get the x-pin and allow for quick repeated requests:</p>
 </tr>
 </thead>
 <tbody><tr>
-<td><code>verify(checksum)</code></td>
+<td><code>verify(nation, checksum)</code></td>
 <td><a href="https://www.nationstates.net/pages/api.html#verification">Verify</a> the checksum of a nation using. Returns a 0 or 1.</td>
 </tr>
 <tr>
-<td><code>downloadDumpAsync(type, directory, options{})</code></td>
+<td><code>downloadDumpAsync(type, directory, options?)</code></td>
 <td>Download data dumps. For options, see <a href="https://heaveria-ns.github.io/nationstates.js/interfaces/DumpOptions.html">DumpOptions</a>.</td>
 </tr>
 <tr>
@@ -189,7 +189,7 @@ in order to get the x-pin and allow for quick repeated requests:</p>
 <a href="#usage-example-1" id="usage-example-1" style="color: inherit; text-decoration: none;">
   <h3>Usage Example:</h3>
 </a>
-<pre><code class="language-TypeScript"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">nsfun</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-0">ns</span><span class="hl-1">.</span><span class="hl-7">NSMethods</span><span class="hl-1">(</span><span class="hl-0">api</span><span class="hl-1">);</span><br/><br/><span class="hl-4">let</span><span class="hl-1"> </span><span class="hl-0">endoResult</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-0">nsfun</span><span class="hl-1">.</span><span class="hl-7">isEndorsing</span><span class="hl-1">(</span><span class="hl-5">&#39;Testlandia&#39;</span><span class="hl-1">, </span><span class="hl-5">&#39;Olvaria&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-0">endoResult</span><span class="hl-1">) </span><span class="hl-2">// false</span>
+<pre><code class="language-TypeScript"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">nsFun</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-0">ns</span><span class="hl-1">.</span><span class="hl-7">NSMethods</span><span class="hl-1">(</span><span class="hl-0">api</span><span class="hl-1">);</span><br/><br/><span class="hl-4">let</span><span class="hl-1"> </span><span class="hl-0">endoResult</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-0">nsFun</span><span class="hl-1">.</span><span class="hl-7">isEndorsing</span><span class="hl-1">(</span><span class="hl-5">&#39;Testlandia&#39;</span><span class="hl-1">, </span><span class="hl-5">&#39;Olvaria&#39;</span><span class="hl-1">); </span><span class="hl-2">// Is Testlandia endorsing Olvaria?</span><br/><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-0">endoResult</span><span class="hl-1">) </span><span class="hl-2">// 0</span>
 </code></pre>
 
 <a href="#contact--questions" id="contact--questions" style="color: inherit; text-decoration: none;">
