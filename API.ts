@@ -6,8 +6,6 @@ import * as fs from "fs";
 import * as xml2js from 'xml2js';
 // Zlib
 import * as zlib from 'zlib';
-import {pipeline} from "stream";
-import {json} from "stream/consumers";
 
 /**
  * Required for all other classes. Defines the configuration of the wrapper and is used to enforce rate limits and user agents.
@@ -689,7 +687,7 @@ export class NSMethods extends RequestBuilder {
         this.resetURL();
 
         // Add nation
-        this.addNation(nation);
+        this.addNation(nation.toLowerCase().replace(' ', '_'));
 
         // Adds "a=verify" to the URL parameters.
         this._urlObj.searchParams.append('a', 'verify');
@@ -809,28 +807,94 @@ export class NSMethods extends RequestBuilder {
 }
 
 /**
- * @hidden
+ * Dispatch modes
  */
-export enum DispatchMode {
+export enum Mode {
     add = 'add',
     remove = 'remove',
     edit = 'edit'
 }
 
 /**
- * Future support for dispatch private commands.
+ * Dispatch categories
+ */
+export enum Category {
+    factbook = 1,
+    bulletin = 3,
+    account = 5,
+    meta = 8
+}
+
+/**
+ * Dispatch factbook subcategories
+ */
+export enum Factbook {
+    overview = 100,
+    history = 101,
+    geography = 102,
+    culture = 103,
+    politics = 104,
+    legislation = 105,
+    religion = 106,
+    military = 107,
+    economy = 108,
+    international = 109,
+    trivia = 110,
+    miscellaneous = 111,
+}
+
+/**
+ * Dispatch bulletin subcategories
+ */
+export enum Bulletin {
+    policy = 305,
+    news = 315,
+    opinion = 325,
+    campaign = 385,
+}
+
+/**
+ * Dispatch account subcategories
+ */
+export enum Account {
+    military = 505,
+    trade = 515,
+    sport = 525,
+    drama = 535,
+    diplomacy = 545,
+    science = 555,
+    culture = 565,
+    other = 595
+}
+
+/**
+ * Dispatch meta subcategories
+ */
+export enum Meta {
+    subcategory = 835,
+    reference = 845
+}
+
+/**
+ * A class to handle creating, editing, and deleting dispatches in more high-level functions.
+ * @example const methods = new Dispatch(api, 'nation', 'password', Mode.add);
+ * @param { API } API The API object to enforce rate limiting and user agents.
+ * @param { string } nation Your nation name without prefixes. Used for authenticating with the NationStates API.
+ * @param { string } password Your password. Used for authenticating with the NationStates API.
+ * @param { Mode } action Enumerator to specify the action to be taken.
  */
 export class Dispatch extends RequestBuilder {
+    API: API;
     private readonly nation: string;
     private readonly password: string;
-    private xPin: number;
+    private readonly action: Mode;
 
-    constructor(api: API, nation: string, password: string, action: string) {
+    constructor(api: API, nation: string, password: string, action: Mode) {
         super(api);
+        this.API = api;
         this.nation = nation;
         this.password = password;
-        this.addNation(this.nation).addCustomParam('c', 'dispatch');
-        this.addAction(action);
+        this.action = action;
     }
 
     /**
@@ -849,9 +913,9 @@ export class Dispatch extends RequestBuilder {
 
         // Only allow add, remove, and edit.
         let result: boolean = false;
-        if (method === 'add') { result = true; }
-        if (method === 'remove') { result = true; }
-        if (method === 'edit') { result = true; }
+        if (method === 'add') result = true
+        if (method === 'remove') result = true;
+        if (method === 'edit') result = true;
 
         if (result) {
             this._urlObj.searchParams.append('dispatch', method);
@@ -896,7 +960,7 @@ export class Dispatch extends RequestBuilder {
      * Set the category of the dispatch.
      * @param category
      */
-    public category(category: number) {
+    public category(category: Category) {
         // Type-checking
         if (typeof (category) !== 'number') throw new Error('The category must be a number. See NationStates API documentation.')
 
@@ -911,7 +975,7 @@ export class Dispatch extends RequestBuilder {
      * Set the category of the dispatch.
      * @param subcategory
      */
-    public subcategory(subcategory: number) {
+    public subcategory(subcategory: Factbook | Bulletin | Account | Meta) {
         // Type-checking
         if (typeof (subcategory) !== 'number') throw new Error('The category must be a number. See NationStates API documentation.')
 
@@ -941,15 +1005,27 @@ export class Dispatch extends RequestBuilder {
     }
 
     /**
+     * Obtain the x-pin of a nation.
+     * @private
+     */
+    private async authenticate() {
+        const privateRequest = new PrivateRequestBuilder(this.API);
+        await privateRequest.authenticate(this.nation, this.password);
+        return privateRequest._authentication._xPin;
+    }
+
+    /**
      * Sends command asynchronously according to specifications with mode=prepare and mode=execute.
      * Returns true if success or throws an error.
      */
     public async executeAsync(): Promise<boolean> {
         /*----- 1. Retrieve the x-pin -----*/
-        if (this.xPin === undefined) this.xPin = (await new PrivateRequestBuilder(this.API).authenticate(this.nation, this.password))._authentication._xPin;
+        const xPin = await this.authenticate();
 
         /*----- 2. Prepare Request -----*/
         // Append prepare mode to the url to later retrieve the success token.
+        this.addNation(this.nation).addCustomParam('c', 'dispatch');
+        this.addAction(this.action);
         this._urlObj.searchParams.append('mode', 'prepare');
 
         // Send the request.
@@ -962,7 +1038,7 @@ export class Dispatch extends RequestBuilder {
             const res = await fetch(this.href, {
                 headers: {
                     'User-Agent': this.API.userAgent,
-                    'X-Pin': this.xPin.toString()
+                    'X-Pin': xPin
                 }
             });
 
@@ -990,7 +1066,7 @@ export class Dispatch extends RequestBuilder {
             const res = await fetch(this.href, {
                 headers: {
                     'User-Agent': this.API.userAgent,
-                    'X-Pin': this.xPin.toString()
+                    'X-Pin': xPin
                 }
             });
 
