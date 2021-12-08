@@ -51,7 +51,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Dispatch = exports.Bulletin = exports.Factbook = exports.Category = exports.Mode = exports.NSMethods = exports.PrivateRequestBuilder = exports.RequestBuilder = exports.CouncilID = exports.xmlParser = exports.API = void 0;
+exports.Dispatch = exports.Meta = exports.Account = exports.Bulletin = exports.Factbook = exports.Category = exports.Mode = exports.NSMethods = exports.PrivateRequestBuilder = exports.RequestBuilder = exports.CouncilID = exports.xmlParser = exports.API = exports.Cards = exports.WorldAssembly = exports.World = exports.Region = exports.NationPrivate = exports.NationPublic = void 0;
 // Node-fetch v.2.6.5. Still supported by developers.
 var node_fetch_1 = require("node-fetch");
 // Filesystem
@@ -60,6 +60,171 @@ var fs = require("fs");
 var xml2js = require("xml2js");
 // Zlib
 var zlib = require("zlib");
+var NationPublic;
+(function (NationPublic) {
+    NationPublic["admirable"] = "admirable";
+    NationPublic["admirables"] = "admirables";
+    NationPublic["animal"] = "animal";
+    NationPublic["animaltrait"] = "animaltrait";
+    NationPublic["answered"] = "answered";
+    NationPublic["banner"] = "banner";
+    NationPublic["banners"] = "banners";
+    NationPublic["capital"] = "capital";
+    NationPublic["category"] = "category";
+    NationPublic["census"] = "census";
+    NationPublic["crime"] = "crime";
+    NationPublic["currency"] = "currency";
+    NationPublic["customleader"] = "customleader";
+    NationPublic["customcapital"] = "customcapital";
+    NationPublic["customreligion"] = "customreligion";
+    NationPublic["dbid"] = "dbid";
+    NationPublic["deaths"] = "deaths";
+    NationPublic["demonym"] = "demonym";
+    NationPublic["demonym2"] = "denonym";
+    NationPublic["demonym2plural"] = "demonym2plural";
+    NationPublic["dispatches"] = "dispatches";
+    NationPublic["dispatchlist"] = "dispatchlist";
+    NationPublic["endorsements"] = "endorsements";
+    NationPublic["factbooks"] = "factbooks";
+    NationPublic["factbooklist"] = "factbooklist";
+    NationPublic["firstlogin"] = "firstlogin";
+    NationPublic["flag"] = "flag";
+    NationPublic["founded"] = "founded";
+    NationPublic["foundedtime"] = "foundedtime";
+    NationPublic["freedom"] = "freedom";
+    NationPublic["fullname"] = "fullname";
+    NationPublic["gavote"] = "gavote";
+    NationPublic["gdp"] = "gdp";
+    NationPublic["govt"] = "govt";
+    NationPublic["govtdesc"] = "govtdesc";
+    NationPublic["govtpriority"] = "govtpriority";
+    NationPublic["happenings"] = "happenings";
+    NationPublic["income"] = "income";
+    NationPublic["industrydesc"] = "industrydesc";
+    NationPublic["influence"] = "influence";
+    NationPublic["lastactivity"] = "lastactivity";
+    NationPublic["lastlogin"] = "lastlogin";
+    NationPublic["leader"] = "leader";
+    NationPublic["legislation"] = "legislation";
+    NationPublic["majorindustry"] = "majorindustry";
+    NationPublic["motto"] = "motto";
+    NationPublic["name"] = "name";
+    NationPublic["notable"] = "notable";
+    NationPublic["notables"] = "notables";
+    NationPublic["policies"] = "policies";
+    NationPublic["poorest"] = "poorest";
+    NationPublic["population"] = "population";
+    NationPublic["publicsector"] = "publicsector";
+    NationPublic["rcensus"] = "rcensus";
+    NationPublic["region"] = "region";
+    NationPublic["religion"] = "religion";
+    NationPublic["richest"] = "richest";
+    NationPublic["scvote"] = "scvote";
+    NationPublic["sectors"] = "sectors";
+    NationPublic["sensibilites"] = "sensibilites";
+    NationPublic["tax"] = "tax";
+    NationPublic["tgcanrecruit"] = "tgcanrecruit";
+    NationPublic["tgcancampaign"] = "tgcancampaign";
+    NationPublic["type"] = "type";
+    NationPublic["wa"] = "wa";
+    NationPublic["wabadges"] = "wabadges";
+    NationPublic["wcensus"] = "wcensus";
+    NationPublic["zombie"] = "zombie";
+})(NationPublic = exports.NationPublic || (exports.NationPublic = {}));
+var NationPrivate;
+(function (NationPrivate) {
+    NationPrivate["dossier"] = "dossier";
+    NationPrivate["issues"] = "issues";
+    NationPrivate["issuesummary"] = "issuesummary";
+    NationPrivate["nextissue"] = "nextissue";
+    NationPrivate["nextissuetime"] = "nextissuetime";
+    NationPrivate["notices"] = "notices";
+    NationPrivate["packs"] = "packs";
+    NationPrivate["ping"] = "ping";
+    NationPrivate["rdossier"] = "rdossier";
+    NationPrivate["unread"] = "unread";
+})(NationPrivate = exports.NationPrivate || (exports.NationPrivate = {}));
+var Region;
+(function (Region) {
+    Region["census"] = "census";
+    Region["censusranks"] = "censusranks";
+    Region["dbid"] = "dbid";
+    Region["delegate"] = "delegate";
+    Region["delegateauth"] = "delegateauth";
+    Region["delegatevotes"] = "delegatevotes";
+    Region["dispatches"] = "dispatches";
+    Region["embassies"] = "embassies";
+    Region["embassyrmb"] = "embassyrmb";
+    Region["factbook"] = "factbook";
+    Region["flag"] = "flag";
+    Region["founded"] = "founded";
+    Region["foundedtime"] = "foundedtime";
+    Region["founder"] = "founder";
+    Region["founderauth"] = "founderauth";
+    Region["gavote"] = "gavote";
+    Region["happenings"] = "happenings";
+    Region["history"] = "history";
+    Region["lastupdate"] = "lastupdate";
+    Region["messages"] = "messages";
+    Region["name"] = "name";
+    Region["nations"] = "nations";
+    Region["numnations"] = "numnations";
+    Region["officers"] = "officers";
+    Region["poll"] = "poll";
+    Region["power"] = "power";
+    Region["scvote"] = "scvote";
+    Region["tags"] = "tags";
+    Region["wabadges"] = "wabadges";
+    Region["zombie"] = "zombie";
+})(Region = exports.Region || (exports.Region = {}));
+var World;
+(function (World) {
+    World["banner"] = "banner";
+    World["census"] = "census";
+    World["censusid"] = "censusid";
+    World["censusdesc"] = "censusdesc";
+    World["censusname"] = "censusname";
+    World["censusranks"] = "censusranks";
+    World["censusscale"] = "censusscale";
+    World["censustitle"] = "censustitle";
+    World["dispatch"] = "dispatch";
+    World["dispatchlist"] = "dispatchlist";
+    World["faction"] = "faction";
+    World["factions"] = "factions";
+    World["featuredregion"] = "featuredregion";
+    World["happenings"] = "happenings";
+    World["lastevenid"] = "lastevenid";
+    World["nations"] = "nations";
+    World["newnations"] = "newnations";
+    World["numnations"] = "numnations";
+    World["numregions"] = "numregions";
+    World["poll"] = "poll";
+    World["regions"] = "regions";
+    World["regionsbytag"] = "regionsbytag";
+    World["tgqueue"] = "tgqueue";
+})(World = exports.World || (exports.World = {}));
+var WorldAssembly;
+(function (WorldAssembly) {
+    WorldAssembly["numnations"] = "numnations";
+    WorldAssembly["numdelegates"] = "numdelegates";
+    WorldAssembly["delegates"] = "delegates";
+    WorldAssembly["members"] = "members";
+    WorldAssembly["happenings"] = "happenings";
+    WorldAssembly["proposals"] = "proposals";
+    WorldAssembly["resolution"] = "resolution";
+    WorldAssembly["voters"] = "voters";
+    WorldAssembly["votetrack"] = "votetrack";
+    WorldAssembly["dellog"] = "dellog";
+    WorldAssembly["delvotes"] = "delvotes";
+    WorldAssembly["lastresolution"] = "lastresolution";
+})(WorldAssembly = exports.WorldAssembly || (exports.WorldAssembly = {}));
+var Cards;
+(function (Cards) {
+    Cards["info"] = "info";
+    Cards["markets"] = "markets";
+    Cards["owners"] = "owners";
+    Cards["trades"] = "trades";
+})(Cards = exports.Cards || (exports.Cards = {}));
 /**
  * Required for all other classes. Defines the configuration of the wrapper and is used to enforce rate limits and user agents.
  * @example const api = new API('Testlandia');
@@ -461,7 +626,7 @@ var RequestBuilder = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                 }
@@ -657,7 +822,7 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Password': password
@@ -685,7 +850,6 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
      * Executes the request and saves the response to the RequestBuilder object.
      * Retrieve after awaiting it via .response, .body, or convert it to a JS object with convertToJSON();
      * Polymorph of RequestBuilder.
-     * @example const req = await new RequestBuilder(api).addNation('Testlandia').sendRequestAsync()
      */
     PrivateRequestBuilder.prototype.sendRequestAsync = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -694,8 +858,9 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                 switch (_a.label) {
                     case 0:
                         // Verifies that the authentication object is set.
-                        if (!this._authentication.status)
+                        if (!this._authentication.status) {
                             throw new Error('You must first authenticate! Run authenticate() on your private request before sending it.');
+                        }
                         // Check rate limit.
                         return [4 /*yield*/, this.execRateLimit()];
                     case 1:
@@ -704,10 +869,10 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
-                                    'X-Pin': this._authentication._xPin.toString()
+                                    'X-Pin': this._authentication._xPin,
                                 }
                             })];
                     case 3:
@@ -834,7 +999,7 @@ var NSMethods = /** @class */ (function (_super) {
                     case 1:
                         // Check rate limit.
                         _a.sent();
-                        return [4 /*yield*/, (0, node_fetch_1.default)("https://www.nationstates.net/pages/" + type + ".xml.gz", {
+                        return [4 /*yield*/, node_fetch_1.default("https://www.nationstates.net/pages/" + type + ".xml.gz", {
                                 headers: {
                                     'User-Agent': this.API.userAgent
                                 }
@@ -961,7 +1126,7 @@ var Category;
     Category[Category["meta"] = 8] = "meta";
 })(Category = exports.Category || (exports.Category = {}));
 /**
- * Dispatch factbook categories
+ * Dispatch factbook subcategories
  */
 var Factbook;
 (function (Factbook) {
@@ -978,6 +1143,9 @@ var Factbook;
     Factbook[Factbook["trivia"] = 110] = "trivia";
     Factbook[Factbook["miscellaneous"] = 111] = "miscellaneous";
 })(Factbook = exports.Factbook || (exports.Factbook = {}));
+/**
+ * Dispatch bulletin subcategories
+ */
 var Bulletin;
 (function (Bulletin) {
     Bulletin[Bulletin["policy"] = 305] = "policy";
@@ -985,6 +1153,28 @@ var Bulletin;
     Bulletin[Bulletin["opinion"] = 325] = "opinion";
     Bulletin[Bulletin["campaign"] = 385] = "campaign";
 })(Bulletin = exports.Bulletin || (exports.Bulletin = {}));
+/**
+ * Dispatch account subcategories
+ */
+var Account;
+(function (Account) {
+    Account[Account["military"] = 505] = "military";
+    Account[Account["trade"] = 515] = "trade";
+    Account[Account["sport"] = 525] = "sport";
+    Account[Account["drama"] = 535] = "drama";
+    Account[Account["diplomacy"] = 545] = "diplomacy";
+    Account[Account["science"] = 555] = "science";
+    Account[Account["culture"] = 565] = "culture";
+    Account[Account["other"] = 595] = "other";
+})(Account = exports.Account || (exports.Account = {}));
+/**
+ * Dispatch meta subcategories
+ */
+var Meta;
+(function (Meta) {
+    Meta[Meta["subcategory"] = 835] = "subcategory";
+    Meta[Meta["reference"] = 845] = "reference";
+})(Meta = exports.Meta || (exports.Meta = {}));
 /**
  * A class to handle creating, editing, and deleting dispatches in more high-level functions.
  * @example const methods = new Dispatch(api, 'nation', 'password', Mode.add);
@@ -1099,6 +1289,10 @@ var Dispatch = /** @class */ (function (_super) {
         // Method chaining
         return this;
     };
+    /**
+     * Obtain the x-pin of a nation.
+     * @private
+     */
     Dispatch.prototype.authenticate = function () {
         return __awaiter(this, void 0, void 0, function () {
             var privateRequest;
@@ -1141,7 +1335,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _a.label = 3;
                     case 3:
                         _a.trys.push([3, 6, , 7]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': xPin
@@ -1173,7 +1367,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _a.label = 10;
                     case 10:
                         _a.trys.push([10, 13, , 14]);
-                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
+                        return [4 /*yield*/, node_fetch_1.default(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': xPin

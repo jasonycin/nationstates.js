@@ -4,3 +4,6 @@ API.d.ts
 test.ts
 test.js
 test.js.map
+/examples/PrivateRequestBuilder/PrivateRequestBuilder.d.ts
+/examples/Private Commands/Dispatch/Dispatch.d.ts
+/examples/RequestBuilder/RequestBuilder.d.ts

@@ -7,6 +7,171 @@ import * as xml2js from 'xml2js';
 // Zlib
 import * as zlib from 'zlib';
 
+export enum NationPublic {
+    admirable = "admirable",
+    admirables = "admirables",
+    animal = "animal",
+    animaltrait = "animaltrait",
+    answered = "answered",
+    banner = "banner",
+    banners = "banners",
+    capital = "capital",
+    category = "category",
+    census = "census",
+    crime = "crime",
+    currency = "currency",
+    customleader = "customleader",
+    customcapital = "customcapital",
+    customreligion = "customreligion",
+    dbid = "dbid",
+    deaths = "deaths",
+    demonym = "demonym",
+    demonym2 = "denonym",
+    demonym2plural = "demonym2plural",
+    dispatches = "dispatches",
+    dispatchlist = "dispatchlist",
+    endorsements = "endorsements",
+    factbooks = "factbooks",
+    factbooklist = "factbooklist",
+    firstlogin = "firstlogin",
+    flag = "flag",
+    founded = "founded",
+    foundedtime = "foundedtime",
+    freedom = "freedom",
+    fullname = "fullname",
+    gavote = "gavote",
+    gdp = "gdp",
+    govt = "govt",
+    govtdesc = "govtdesc",
+    govtpriority = "govtpriority",
+    happenings = "happenings",
+    income = "income",
+    industrydesc = "industrydesc",
+    influence = "influence",
+    lastactivity = "lastactivity",
+    lastlogin = "lastlogin",
+    leader = "leader",
+    legislation = "legislation",
+    majorindustry = "majorindustry",
+    motto = "motto",
+    name = "name",
+    notable = "notable",
+    notables = "notables",
+    policies = "policies",
+    poorest = "poorest",
+    population = "population",
+    publicsector = "publicsector",
+    rcensus = "rcensus",
+    region = "region",
+    religion = "religion",
+    richest = "richest",
+    scvote = "scvote",
+    sectors = "sectors",
+    sensibilites = "sensibilites",
+    tax = "tax",
+    tgcanrecruit = "tgcanrecruit",
+    tgcancampaign = "tgcancampaign",
+    type = "type",
+    wa = "wa",
+    wabadges = "wabadges",
+    wcensus = "wcensus",
+    zombie = "zombie"
+}
+
+export enum NationPrivate {
+    dossier = "dossier",
+    issues = "issues",
+    issuesummary = "issuesummary",
+    nextissue = "nextissue",
+    nextissuetime = "nextissuetime",
+    notices = "notices",
+    packs = "packs",
+    ping = "ping",
+    rdossier = "rdossier",
+    unread = "unread",
+}
+
+export enum Region {
+    census = "census",
+    censusranks = "censusranks",
+    dbid = "dbid",
+    delegate = "delegate",
+    delegateauth = "delegateauth",
+    delegatevotes = "delegatevotes",
+    dispatches = "dispatches",
+    embassies = "embassies",
+    embassyrmb = "embassyrmb",
+    factbook = "factbook",
+    flag = "flag",
+    founded = "founded",
+    foundedtime = "foundedtime",
+    founder = "founder",
+    founderauth = "founderauth",
+    gavote = "gavote",
+    happenings = "happenings",
+    history = "history",
+    lastupdate = "lastupdate",
+    messages = "messages",
+    name = "name",
+    nations = "nations",
+    numnations = "numnations",
+    officers = "officers",
+    poll = "poll",
+    power = "power",
+    scvote = "scvote",
+    tags = "tags",
+    wabadges = "wabadges",
+    zombie = "zombie"
+}
+
+export enum World {
+    banner = "banner",
+    census = "census",
+    censusid = "censusid",
+    censusdesc = "censusdesc",
+    censusname = "censusname",
+    censusranks = "censusranks",
+    censusscale = "censusscale",
+    censustitle = "censustitle",
+    dispatch = "dispatch",
+    dispatchlist = "dispatchlist",
+    faction = "faction",
+    factions = "factions",
+    featuredregion = "featuredregion",
+    happenings = "happenings",
+    lastevenid = "lastevenid",
+    nations = "nations",
+    newnations = "newnations",
+    numnations = "numnations",
+    numregions = "numregions",
+    poll = "poll",
+    regions = "regions",
+    regionsbytag = "regionsbytag",
+    tgqueue = "tgqueue",
+}
+
+export enum WorldAssembly {
+    numnations = "numnations",
+    numdelegates = "numdelegates",
+    delegates = "delegates",
+    members = "members",
+    happenings = "happenings",
+    proposals = "proposals",
+    resolution = "resolution",
+    voters = "voters",
+    votetrack = "votetrack",
+    dellog = "dellog",
+    delvotes = "delvotes",
+    lastresolution = "lastresolution"
+}
+
+export enum Cards {
+    info = "info",
+    markets = "markets",
+    owners = "owners",
+    trades = "trades",
+}
+
 /**
  * Required for all other classes. Defines the configuration of the wrapper and is used to enforce rate limits and user agents.
  * @example const api = new API('Testlandia');
@@ -297,7 +462,7 @@ export class RequestBuilder {
      * @example .addCouncil(1) adds 'wa=1' to the url.
      * @param id
      */
-    public addCouncilID(id: CouncilID): RequestBuilder {
+    public addCouncilID(id: CouncilID | number): RequestBuilder {
         // Type-checking
         if (typeof (id) !== 'number') throw new Error(`You submitted an invalid council ID: ${id}. Must be a number.`);
 
@@ -333,7 +498,7 @@ export class RequestBuilder {
      * @example .addShards([ 'flag', 'population' ]) adds 'q=flag+population' to the url.
      * @param shards
      */
-    public addShards(shards: string | string[]): RequestBuilder {
+    public addShards(shards: NationPublic | NationPrivate | Region | World | WorldAssembly | Cards | string | string[]): RequestBuilder {
         switch (typeof (shards)) {
             // If only a single shard is given, push it to _shards[].
             case "string":
@@ -343,9 +508,8 @@ export class RequestBuilder {
             // If array of strings, then push each string to _shards[].
             case "object":
                 // Iterate over each shard.
-                for (let shard of shards) {
+                for (let shard of shards)
                     this._shards.push(shard);
-                }
                 break;
 
             // Error handling
@@ -597,11 +761,12 @@ export class PrivateRequestBuilder extends RequestBuilder {
      * Executes the request and saves the response to the RequestBuilder object.
      * Retrieve after awaiting it via .response, .body, or convert it to a JS object with convertToJSON();
      * Polymorph of RequestBuilder.
-     * @example const req = await new RequestBuilder(api).addNation('Testlandia').sendRequestAsync()
      */
-    public async sendRequestAsync(): Promise<RequestBuilder> {
+    public async sendRequestAsync(): Promise<PrivateRequestBuilder> {
         // Verifies that the authentication object is set.
-        if (!this._authentication.status) throw new Error('You must first authenticate! Run authenticate() on your private request before sending it.')
+        if (!this._authentication.status) {
+            throw new Error('You must first authenticate! Run authenticate() on your private request before sending it.')
+        }
 
         // Check rate limit.
         await this.execRateLimit();
@@ -612,7 +777,7 @@ export class PrivateRequestBuilder extends RequestBuilder {
             const res = await fetch(this.href, {
                 headers: {
                     'User-Agent': this.API.userAgent,
-                    'X-Pin': this._authentication._xPin.toString()
+                    'X-Pin': this._authentication._xPin,
                 }
             });
 
