@@ -120,11 +120,11 @@ await privReq.authenticate('nation', 'password')
 ## NSMethods
 ➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html)
 
-| Feature                                        | Purpose                                                                                                                         |
-|------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| `verify(nation, checksum)`                     | [Verify](https://www.nationstates.net/pages/api.html#verification) the checksum of a nation using. Returns a 0 or 1.            |
-| `downloadDumpAsync(type, directory, options?)` | Download data dumps. For options, see [DumpOptions](https://heaveria-ns.github.io/nationstates.js/interfaces/DumpOptions.html). |
-| `isEndorsing(nation1, nation2)`                | Verifies if `nation1` is endorsing `nation2`. Returns a boolean.                                                                |
+| Feature                                        | Purpose                                                                                                                                                            |
+|------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `verify(nation, checksum, siteSpecificToken?)` | [Verify](https://www.nationstates.net/pages/api.html#verification) the checksum of a nation using. Returns a 0 or 1. You may optionally add a site-specific token. |
+| `downloadDumpAsync(type, directory, options?)` | Download data dumps. For options, see [DumpOptions](https://heaveria-ns.github.io/nationstates.js/interfaces/DumpOptions.html).                                    |
+| `isEndorsing(nation1, nation2)`                | Verifies if `nation1` is endorsing `nation2`. Returns a boolean.                                                                                                   |
 
 ### Usage Example:
 ```TypeScript
