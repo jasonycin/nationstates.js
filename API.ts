@@ -733,7 +733,7 @@ export class PrivateRequestBuilder extends RequestBuilder {
             throw new Error(e);
         }
 
-
+        // TODO: Retrieve AuthObj with a new PrivateRequestBuilder, otherwise the URL will reset and authentication HAS to be first.
         // Since we modified the URL when retrieving the x-pin, we will reset it.
         this.resetURL();
 
