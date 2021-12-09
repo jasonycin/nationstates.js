@@ -44,10 +44,10 @@ async function examples() {
      * Example 4: Download a data dump in its compressed .xml.gz format.
      * downloadDumpAsync(type, pathToSave, options?)
      */
-    //await new NSMethods(api).downloadDumpAsync('nations', './') // Type = 'nations' or 'regions'
+    await new NSMethods(api).downloadDumpAsync('nations', './') // Type = 'nations' or 'regions'
 
     /**
-     * Example 4: Download a data dump. Additionally:
+     * Example 5: Download a data dump. Additionally:
      * 1. Extract the xml.gz file to a .xml file.
      * 2. Parse the .xml file to a JSON file.
      * 3. Delete the original .xml.gz file.
