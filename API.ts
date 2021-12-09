@@ -180,7 +180,7 @@ export class API {
     static readonly version: string = '1.0.0';
     private _userAgent: string;
     private _rateLimit: number = 650;
-    private static _lastRequestMs: number;
+    protected static _lastRequestMs: number;
 
     /**
      * Instance must be instantiated with a user agent string. Setting a custom rate limit is optional.
@@ -218,12 +218,12 @@ export class API {
             // Last character cannot be a space
             userAgent.slice(-1) === ' ' ||
             // Data type is string.
-            typeof (userAgent) !== 'string') {
+            typeof (userAgent) !== 'string')
                 // Throw error.
                 throw new Error(`You submitted an invalid user agent: ${userAgent}`);
-        }
+
         // Set user agent.
-        this._userAgent = `User-Agent: ${userAgent}. Using API wrapper written by Heaveria.`;
+        this._userAgent = `User-Agent: ${userAgent}. Using NationStates.js wrapper written by Heaveria.`;
     }
 
     /**
@@ -304,7 +304,7 @@ export const xmlParser = new xml2js.Parser({
 });
 
 /**
- * Enumerator for the different types WA API calls. See addCouncilID() for usage.
+ * Enumerator for the different WA API calls. See addCouncilID() for usage.
  */
 export enum CouncilID {
     GeneralAssembly = 1,
@@ -337,9 +337,9 @@ export interface Response {
  */
 export class RequestBuilder {
     protected API: API;
-    public _urlObj: URL = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
+    protected _urlObj: URL = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
     protected _shards: string[] = [];
-    _response: Response;
+    protected _response: Response;
 
     constructor(API: API) {
         this.API = API;
@@ -347,14 +347,28 @@ export class RequestBuilder {
 
     /**
      * Returns full node-fetch request and other meta-data created by the API wrapper.
-     * Not needed unless you need to do something specific with the request.
+     * Typical usage would to analyze the request for any errors.
      * @example console.log(request.fetchResponse);
      */
-    public get response(): Response {
+    public get responseData(): Response {
         // Verify if response is undefined.
         if (!this._response) throw new Error('No response found. Send a request first using sendRequestAsync()!')
 
         return this._response;
+    }
+
+    /**
+     * Returns the response status code and status boolean from the node-fetch response as an object.
+     * @example console.log(request.responseStatus.statusCode);
+     */
+    public get responseStatus(): object {
+        // Verify if response is undefined.
+        if (!this._response) throw new Error('No response found. Send a request first using sendRequestAsync()!')
+
+        return {
+            code: this._response.statusCode,
+            bool: this._response.statusBool
+        };
     }
 
 
@@ -378,7 +392,7 @@ export class RequestBuilder {
      */
     public get js(): object {
         // Verify if the response has been converted to js.
-        if (!this._response.js) throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent..')
+        if (!this._response.js) throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent.')
 
         return this._response.js;
     }
@@ -433,9 +447,8 @@ export class RequestBuilder {
             // Last character cannot be a space
             name.slice(-1) === ' ' ||
             // Data type is string.
-            typeof (name) !== 'string') {
-            throw new Error(`You submitted an invalid nation name: ${name}`);
-        }
+            typeof (name) !== 'string')
+                throw new Error(`You submitted an invalid nation name: ${name}`);
 
         // Append nation to the url.
         this._urlObj.searchParams.append('nation', name);
