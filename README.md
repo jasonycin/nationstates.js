@@ -23,6 +23,7 @@ This wrapper takes care of enforcing the rate limit, conversions to JS objects, 
 | ✅   | Private shards                    | See [PrivateRequestBuilder](#privaterequestbuilder).                                                                                                                                                            |
 | 🟡  | Private commands                  | See [Dispatches](#dispatches). No support for `issues` or `giftcards`.                                                                                                                                          |
 | ✅   | Built-in methods for common tasks | See [NSMethods](#nsmethods).                                                                                                                                                                                    |
+| 🟡  | Browser support                   | [Yes](#browser support), but not guaranteed.                                                                                                                                                                    |
 
 ## Installation / Setup
 ### 1. Installation
@@ -170,6 +171,27 @@ await new ns.Dispatch(api, 'nation', 'password', ns.Mode.edit)
 ```
 
 ⚠️ There is no support for `issue` or `giftcard` private commands.
+
+## Browser Support
+Browser support is **not** guarenteed but possible using [Browserify](https://browserify.org/).
+Here's how:
+1. Create a new Node.js project.
+2. Create a new `index.js` file and run `npm install nationstates.js`.
+3. Require the library in your `index.js`:
+```JavaScript
+const ns = require('nationstates.js');
+```
+4. Now install Browserify: `npm install -g browserify`.
+5. Now we can convert our `.js` file to a `.js` file that can be run in a browser. The following command recursively 
+finds all require() statements and bundles them together in a `browser.js` file. It outputs `ns` as a global variable which you use to access thelibrary:
+`browserify index.js -o --standalone ns > browser.js`
+6. The following should now work in the browser:
+```HTML
+<script src="browser.js">
+    const api = ns.API('user-agent');
+    // Rest of your script here...
+</script>
+```
 
 ## Contact / Questions
 If you've encountered any issue, have feature requests, or need support using this API please feel free to reach
