@@ -722,36 +722,15 @@ export class PrivateRequestBuilder extends RequestBuilder {
         this._authentication._nation = nation;
         this._authentication._xPassword = password;
 
+        // By using a seperate request builder, we avoid messing with the defined URL.
+        const req = new PrivateRequestBuilder(this.API).addNation(nation).addShards('unread');
 
-        // Retrieve x-pin.
-        this.addNation(nation).addShards('unread');
-
-        try {
-            this._authentication._xPin = await this.getXPin(password);
-            this._authentication.status = true;
-        } catch (e) {
-            throw new Error(e);
-        }
-
-        // TODO: Retrieve AuthObj with a new PrivateRequestBuilder, otherwise the URL will reset and authentication HAS to be first.
-        // Since we modified the URL when retrieving the x-pin, we will reset it.
-        this.resetURL();
-
-        // Method chaining.
-        return this;
-    }
-
-    /**
-     * Sends a request to the NationStates API and returns the x-pin header from the response.
-     * @param password
-     */
-    private async getXPin(password: string): Promise<number> {
         // Check rate limit
         await this.execRateLimit();
 
         // Send request with a x-password header set.
         try {
-            let res = await fetch(this.href, {
+            let res = await fetch(req.href, {
                 headers: {
                     'User-Agent': this.API.userAgent,
                     'X-Password': password
@@ -760,14 +739,19 @@ export class PrivateRequestBuilder extends RequestBuilder {
 
             // Log request and update rate limit.
             await this.logRequest(res);
+
             // Return the x-pin header.
-            return res.headers.get('x-pin');
+            this._authentication._xPin = res.headers.get('x-pin');
+            this._authentication.status = true;
 
         // Error handling.
         } catch (err) {
             // Throw error.
             throw new Error(err);
         }
+
+        // Method chaining.
+        return this;
     }
 
     /**

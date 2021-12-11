@@ -265,12 +265,11 @@ var API = /** @class */ (function () {
                 // Last character cannot be a space
                 userAgent.slice(-1) === ' ' ||
                 // Data type is string.
-                typeof (userAgent) !== 'string') {
+                typeof (userAgent) !== 'string')
                 // Throw error.
                 throw new Error("You submitted an invalid user agent: " + userAgent);
-            }
             // Set user agent.
-            this._userAgent = "User-Agent: " + userAgent + ". Using API wrapper written by Heaveria.";
+            this._userAgent = "User-Agent: " + userAgent + ". Using NationStates.js wrapper written by Heaveria.";
         },
         enumerable: false,
         configurable: true
@@ -360,7 +359,7 @@ exports.xmlParser = new xml2js.Parser({
         }]
 });
 /**
- * Enumerator for the different types WA API calls. See addCouncilID() for usage.
+ * Enumerator for the different WA API calls. See addCouncilID() for usage.
  */
 var CouncilID;
 (function (CouncilID) {
@@ -381,10 +380,10 @@ var RequestBuilder = /** @class */ (function () {
         this._shards = [];
         this.API = API;
     }
-    Object.defineProperty(RequestBuilder.prototype, "response", {
+    Object.defineProperty(RequestBuilder.prototype, "responseData", {
         /**
          * Returns full node-fetch request and other meta-data created by the API wrapper.
-         * Not needed unless you need to do something specific with the request.
+         * Typical usage would to analyze the request for any errors.
          * @example console.log(request.fetchResponse);
          */
         get: function () {
@@ -392,6 +391,23 @@ var RequestBuilder = /** @class */ (function () {
             if (!this._response)
                 throw new Error('No response found. Send a request first using sendRequestAsync()!');
             return this._response;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(RequestBuilder.prototype, "responseStatus", {
+        /**
+         * Returns the response status code and status boolean from the node-fetch response as an object.
+         * @example console.log(request.responseStatus.statusCode);
+         */
+        get: function () {
+            // Verify if response is undefined.
+            if (!this._response)
+                throw new Error('No response found. Send a request first using sendRequestAsync()!');
+            return {
+                code: this._response.statusCode,
+                bool: this._response.statusBool
+            };
         },
         enumerable: false,
         configurable: true
@@ -421,7 +437,7 @@ var RequestBuilder = /** @class */ (function () {
         get: function () {
             // Verify if the response has been converted to js.
             if (!this._response.js)
-                throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent..');
+                throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent.');
             return this._response.js;
         },
         enumerable: false,
@@ -482,9 +498,8 @@ var RequestBuilder = /** @class */ (function () {
             // Last character cannot be a space
             name.slice(-1) === ' ' ||
             // Data type is string.
-            typeof (name) !== 'string') {
+            typeof (name) !== 'string')
             throw new Error("You submitted an invalid nation name: " + name);
-        }
         // Append nation to the url.
         this._urlObj.searchParams.append('nation', name);
         // Method chaining.
@@ -626,7 +641,7 @@ var RequestBuilder = /** @class */ (function () {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                 }
@@ -774,55 +789,23 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
      */
     PrivateRequestBuilder.prototype.authenticate = function (nation, password) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, e_1;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var req, res, err_3;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         // Set nation and password in authentication object, so that if the x-pin expires it can be re-retrieved.
                         this._authentication._nation = nation;
                         this._authentication._xPassword = password;
-                        // Retrieve x-pin.
-                        this.addNation(nation).addShards('unread');
-                        _b.label = 1;
-                    case 1:
-                        _b.trys.push([1, 3, , 4]);
-                        _a = this._authentication;
-                        return [4 /*yield*/, this.getXPin(password)];
-                    case 2:
-                        _a._xPin = _b.sent();
-                        this._authentication.status = true;
-                        return [3 /*break*/, 4];
-                    case 3:
-                        e_1 = _b.sent();
-                        throw new Error(e_1);
-                    case 4:
-                        // Since we modified the URL when retrieving the x-pin, we will reset it.
-                        this.resetURL();
-                        // Method chaining.
-                        return [2 /*return*/, this];
-                }
-            });
-        });
-    };
-    /**
-     * Sends a request to the NationStates API and returns the x-pin header from the response.
-     * @param password
-     */
-    PrivateRequestBuilder.prototype.getXPin = function (password) {
-        return __awaiter(this, void 0, void 0, function () {
-            var res, err_3;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: 
-                    // Check rate limit
-                    return [4 /*yield*/, this.execRateLimit()];
+                        req = new PrivateRequestBuilder(this.API).addNation(nation).addShards('unread');
+                        // Check rate limit
+                        return [4 /*yield*/, this.execRateLimit()];
                     case 1:
                         // Check rate limit
                         _a.sent();
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(req.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Password': password
@@ -836,12 +819,16 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         // Log request and update rate limit.
                         _a.sent();
                         // Return the x-pin header.
-                        return [2 /*return*/, res.headers.get('x-pin')];
+                        this._authentication._xPin = res.headers.get('x-pin');
+                        this._authentication.status = true;
+                        return [3 /*break*/, 6];
                     case 5:
                         err_3 = _a.sent();
                         // Throw error.
                         throw new Error(err_3);
-                    case 6: return [2 /*return*/];
+                    case 6: 
+                    // Method chaining.
+                    return [2 /*return*/, this];
                 }
             });
         });
@@ -869,7 +856,7 @@ var PrivateRequestBuilder = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': this._authentication._xPin,
@@ -999,7 +986,7 @@ var NSMethods = /** @class */ (function (_super) {
                     case 1:
                         // Check rate limit.
                         _a.sent();
-                        return [4 /*yield*/, node_fetch_1.default("https://www.nationstates.net/pages/" + type + ".xml.gz", {
+                        return [4 /*yield*/, (0, node_fetch_1.default)("https://www.nationstates.net/pages/" + type + ".xml.gz", {
                                 headers: {
                                     'User-Agent': this.API.userAgent
                                 }
@@ -1335,7 +1322,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _a.label = 3;
                     case 3:
                         _a.trys.push([3, 6, , 7]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': xPin
@@ -1367,7 +1354,7 @@ var Dispatch = /** @class */ (function (_super) {
                         _a.label = 10;
                     case 10:
                         _a.trys.push([10, 13, , 14]);
-                        return [4 /*yield*/, node_fetch_1.default(this.href, {
+                        return [4 /*yield*/, (0, node_fetch_1.default)(this.href, {
                                 headers: {
                                     'User-Agent': this.API.userAgent,
                                     'X-Pin': xPin
