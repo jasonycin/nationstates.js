@@ -23,7 +23,7 @@ This wrapper takes care of enforcing the rate limit, conversions to JS objects, 
 | ✅   | Private shards                    | See [PrivateRequestBuilder](#privaterequestbuilder).                                                                                                                                                            |
 | 🟡  | Private commands                  | See [Dispatches](#dispatches). No support for `issues` or `giftcards`.                                                                                                                                          |
 | ✅   | Built-in methods for common tasks | See [NSMethods](#nsmethods).                                                                                                                                                                                    |
-| 🟡  | Browser support                   | [Yes](#browser support), but not guaranteed.                                                                                                                                                                    |
+| 🟡  | Browser support                   | [Yes](#browser_support), but not guaranteed.                                                                                                                                                                    |
 
 ## Installation / Setup
 ### 1. Installation
