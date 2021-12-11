@@ -317,7 +317,7 @@ export enum CouncilID {
  * Defines the layout of the response object in a RequestBuilder object.
  * @interface
  */
-export interface Response {
+export interface IResponse {
     fetchResponse: any,
     unixTime: number,
     statusCode: number,
@@ -325,6 +325,11 @@ export interface Response {
     body: any,
     error?: string,
     js?: any
+}
+
+interface IResponseStatus {
+    code: number,
+    bool: boolean
 }
 
 /**
@@ -339,7 +344,7 @@ export class RequestBuilder {
     protected API: API;
     protected _urlObj: URL = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
     protected _shards: string[] = [];
-    protected _response: Response;
+    protected _response: IResponse;
 
     constructor(API: API) {
         this.API = API;
@@ -350,7 +355,7 @@ export class RequestBuilder {
      * Typical usage would to analyze the request for any errors.
      * @example console.log(request.fetchResponse);
      */
-    public get responseData(): Response {
+    public get responseData(): IResponse {
         // Verify if response is undefined.
         if (!this._response) throw new Error('No response found. Send a request first using sendRequestAsync()!')
 
@@ -361,7 +366,7 @@ export class RequestBuilder {
      * Returns the response status code and status boolean from the node-fetch response as an object.
      * @example console.log(request.responseStatus.statusCode);
      */
-    public get responseStatus(): object {
+    public get responseStatus(): IResponseStatus {
         // Verify if response is undefined.
         if (!this._response) throw new Error('No response found. Send a request first using sendRequestAsync()!')
 
@@ -377,7 +382,7 @@ export class RequestBuilder {
      * @example console.log(request.body);
      */
     public get body(): string | number {
-        // Verifies if a response has been recieved.
+        // Verifies if a response has been received.
         if (!this._response) throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?')
 
         // If the body is a number, convert the string to a number and return it, else return the body as is.
@@ -614,7 +619,7 @@ export class RequestBuilder {
         // Record the unix timestamp of the request for rate limiting.
         this.API.lastRequestMs = Date.now();
 
-        // Handle Response
+        // Handle IResponse
         this._response = {
             fetchResponse: res,
             unixTime: Date.now(),
@@ -681,7 +686,7 @@ export class RequestBuilder {
  * Defines the structure of the _authentication object in the API class.
  * @interface
  */
-export interface AuthObj {
+export interface IAuth {
     status: boolean,
     _nation?: string,
     _xPassword?: string,
@@ -695,7 +700,7 @@ export interface AuthObj {
  * @example const request = new PrivateRequestBuilder(api).authenticate('Testlandia', 'password');
  */
 export class PrivateRequestBuilder extends RequestBuilder {
-    public _authentication: AuthObj = {
+    public _authentication: IAuth = {
         status: false,
     }
 
@@ -706,7 +711,7 @@ export class PrivateRequestBuilder extends RequestBuilder {
     /**
      * Returns the authentication information as an object.
      */
-    get authInfo(): AuthObj {
+    get authInfo(): IAuth {
         return this._authentication;
     }
 
@@ -796,7 +801,7 @@ export class PrivateRequestBuilder extends RequestBuilder {
 /**
  * Defines the options for downloading dumps and what to do with them.
  */
-export interface DumpOptions {
+export interface IDumpOptions {
     extract?: boolean;
     deleteXMLGz?: boolean;
     deleteXML?: boolean;
@@ -877,7 +882,7 @@ export class NSMethods extends RequestBuilder {
      * @param directoryToSave - The directory to save the dump to. Should be ended by a slash. Ex: "./downloads/"
      * @param options - If left blank, just downloads the {type}.xml.gz file.
      */
-    public async downloadDumpAsync(type: string, directoryToSave: string, options?: DumpOptions): Promise<NSMethods> {
+    public async downloadDumpAsync(type: string, directoryToSave: string, options?: IDumpOptions): Promise<NSMethods> {
         // TODO: Implement decoding utf-8 within the dump.
         // Verify if type is correct
         if (type !== 'nations' && type !== 'regions') throw new Error('Type must be either "nation" or "region"');
