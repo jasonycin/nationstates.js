@@ -31,6 +31,8 @@ While in your projects' directory run the following command in the terminal to i
 npm i nationstates.js
 ```
 
+Using [Browserify](https://browserify.org/) this package can be used in the browser. Simply grab the file from the [browser](https://github.com/heaveria-ns/nationstates.js/tree/master/browser) folder. It exports `ns` as a global variable.
+
 ### 2. Import/Require the library
 ```TypeScript
 // For TypeScript, you should use the following import statement (Recommended):
