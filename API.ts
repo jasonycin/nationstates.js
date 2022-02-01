@@ -832,13 +832,13 @@ export class NSMethods extends RequestBuilder {
 
         // Get endorsements of nation2.
         const r = await (await this
-            .addNation(nation2)
+            .addNation(nation2.replace(/ /g, '_'))
             .addShards('endorsements')
             .sendRequestAsync())
             .convertToJSAsync();
 
         // Uses RegExp to verify if nation1 is in commma-seperated list of endorsements and returns the boolean.
-        return new RegExp('(?:^|,)' + nation1 + '(?:,|$)').test(r.js['endorsements'])
+        return new RegExp('(?:^|,)' + nation1.replace(/ /g, '_') + '(?:,|$)').test(r.js['endorsements'])
     }
 
     /**
@@ -854,7 +854,7 @@ export class NSMethods extends RequestBuilder {
         this.resetURL();
 
         // Add nation
-        this.addNation(nation.toLowerCase().replace(' ', '_'));
+        this.addNation(nation.toLowerCase().replace(/ /g, '_'));
 
         // Adds "a=verify" to the URL parameters.
         this._urlObj.searchParams.append('a', 'verify');

@@ -418,7 +418,7 @@ var RequestBuilder = /** @class */ (function () {
          * @example console.log(request.body);
          */
         get: function () {
-            // Verifies if a response has been recieved.
+            // Verifies if a response has been received.
             if (!this._response)
                 throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?');
             // If the body is a number, convert the string to a number and return it, else return the body as is.
@@ -678,7 +678,7 @@ var RequestBuilder = /** @class */ (function () {
                     case 0:
                         // Record the unix timestamp of the request for rate limiting.
                         this.API.lastRequestMs = Date.now();
-                        // Handle Response
+                        // Handle IResponse
                         _a = this;
                         _b = {
                             fetchResponse: res,
@@ -688,7 +688,7 @@ var RequestBuilder = /** @class */ (function () {
                         };
                         return [4 /*yield*/, res.text()];
                     case 1:
-                        // Handle Response
+                        // Handle IResponse
                         _a._response = (_b.body = _c.sent(),
                             _b);
                         return [2 /*return*/];
@@ -910,15 +910,16 @@ var NSMethods = /** @class */ (function (_super) {
                         // Reset the object's URL.
                         this.resetURL();
                         return [4 /*yield*/, this
-                                .addNation(nation2)
+                                .addNation(nation2.replace(/ /g, '_'))
                                 .addShards('endorsements')
                                 .sendRequestAsync()];
                     case 1: return [4 /*yield*/, (_a.sent())
                             .convertToJSAsync()];
                     case 2:
                         r = _a.sent();
+                        console.log(r.js['endorsements']);
                         // Uses RegExp to verify if nation1 is in commma-seperated list of endorsements and returns the boolean.
-                        return [2 /*return*/, new RegExp('(?:^|,)' + nation1 + '(?:,|$)').test(r.js['endorsements'])];
+                        return [2 /*return*/, new RegExp('(?:^|,)' + nation1.replace(/ /g, '_') + '(?:,|$)').test(r.js['endorsements'])];
                 }
             });
         });
