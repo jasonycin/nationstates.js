@@ -2,10 +2,10 @@
  * TypeScript Example -- RequestBuilder
  */
 
-import { API, NationPublic, RequestBuilder } from "../../API";
+import { Client, NationPublic, RequestBuilder } from "../../API";
 
 // Instantiate one API object to ensure rate limit and user agent is set correctly.
-const api = new API('user-agent');
+const client = new Client('user-agent');
 
 examples();
 
@@ -20,7 +20,7 @@ async function examples() {
      */
 
     // Build request
-    const request = new RequestBuilder(api)
+    const request = new RequestBuilder(client)
         .addNation('testlandia')
         .addShards([NationPublic.name, NationPublic.gdp, NationPublic.notables])
 

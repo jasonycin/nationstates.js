@@ -2,10 +2,10 @@
  * TypeScript Example -- PrivateRequestBuilder
  */
 
-import {API, NationPrivate, PrivateRequestBuilder} from "../../API";
+import {Client, NationPrivate, PrivateRequestBuilder} from "../../API";
 
 // Instantiate one API object to ensure rate limit and user agent is set correctly.
-const api = new API('user-agent');
+const client = new Client('user-agent');
 
 examples();
 
@@ -21,7 +21,7 @@ async function examples() {
      */
 
     // Instantiate a PrivateRequestBuilder and authenticate
-    const request = await new PrivateRequestBuilder(api).authenticate('testlandia', 'password')
+    const request = await new PrivateRequestBuilder(client).authenticate('testlandia', 'password')
 
     // Build request
     request

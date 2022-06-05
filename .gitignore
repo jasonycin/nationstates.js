@@ -1,9 +1,14 @@
 # Project exclude paths
 API.d.ts
+API.js
+API.js.map
 /node_modules/
 test.ts
 test.js
 test.js.map
-/examples/PrivateRequestBuilder/PrivateRequestBuilder.d.ts
-/examples/Private Commands/Dispatch/Dispatch.d.ts
-/examples/RequestBuilder/RequestBuilder.d.ts
+src/*/*.js
+src/*/*.js.map
+src/*/*.d.ts
+src/*.js
+src/*.js.map
+src/*.d.ts
