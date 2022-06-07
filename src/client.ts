@@ -130,7 +130,6 @@ export class Client {
      */
     set userAgent(userAgent: string) {
         userAgent = userAgent.trim();
-        console.log(!userAgent.match(/^([0-9]|[a-z])+([0-9a-z]+)$/i))
         if (userAgent.length < 3 ||
             !userAgent.match(/^([0-9]|[a-z])+([0-9a-z]+)$/i) || // Must be alphanumeric, or only alpha, or only numeric
             userAgent.slice(-1) === ' ' ||  // Last character cannot be a space

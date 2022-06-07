@@ -1,7 +1,7 @@
 import {API, Client} from "../client";
 import {NationPublic} from "../enums/nation_public";
 import {NationPrivate} from "../enums/nation_private";
-import {Region} from "../enums/region";
+import {RegionPublic} from "../enums/region_public";
 import {World} from "../enums/world";
 import {WorldAssembly} from "../enums/world_assembly";
 import {Cards} from "../enums/cards";
@@ -200,7 +200,7 @@ export class RequestBuilder {
      * @example .addShards([ 'flag', 'population' ]) adds 'q=flag+population' to the url.
      * @param shards
      */
-    public addShards(shards: NationPublic | NationPrivate | Region | World | WorldAssembly | Cards | string | string[]): RequestBuilder {
+    public addShards(shards: NationPublic | NationPrivate | RegionPublic | World | WorldAssembly | Cards | string | string[]): RequestBuilder {
         switch (typeof (shards)) {
             // If only a single shard is given, push it to _shards[].
             case "string":

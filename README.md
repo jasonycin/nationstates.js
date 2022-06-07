@@ -13,8 +13,8 @@ This wrapper takes care of enforcing the rate limit, conversions to JS objects, 
 |-----|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ✅   | Rate limit                        | Built-in to 650ms. Can be raised, but **not** lowered.                                                                                                                                                          |
 | ✅   | Dumps                             | Support for easily downloading, unzipping, and converting to JSON. See [NSMethods](#nsmethods) and the [documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html#downloadDumpAsync). |
-| ✅   | Nations API                       | See [Nation](#nation). Alternative: [RequestBuilder](#requestbuilder).                                                                                                                                          |
-| ✅   | Regions API                       | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
+| ✅   | Nations API                       | See [Nation](#nation) (recommended) or [RequestBuilder](#requestbuilder)                                                                                                                                        |
+| ✅   | Regions API                       | See [Region](#region) (recommended) or [RequestBuilder](#requestbuilder)                                                                                                                                        |
 | ✅   | World API                         | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
 | ✅   | World Assembly API                | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
 | ❌   | Telegrams                         | Future support planned.                                                                                                                                                                                         |
@@ -55,12 +55,23 @@ const client = new ns.Client('user-Agent');
 ## Nation
 ➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/Nation.html)
 
-You can create a newAll public shards for a nation are fetched and stored in a returned `Promise<NationResult>` 
+All public shards for a nation are fetched and stored in a returned `Promise<NationResult>` 
 after awaiting `init()`.
 ### Example:
 ```TypeScript
 const nation = await new ns.Nation(client, 'nationName').init();
 console.log(nation.happenings, nation.population); // Whatever shard you want!
+```
+
+## Region
+➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/Region.html)
+
+All public shards for a region are fetched and stored in a returned `Promise<RegionResult>`
+after awaiting `init()`.
+### Example:
+```TypeScript
+const region = await new ns.Region(client, 'regionName').init();
+console.log(region.messages, region.history); // Whatever shard you want!
 ```
 
 

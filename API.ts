@@ -1,6 +1,6 @@
 import {NationPublic} from "./src/enums/nation_public";
 import {NationPrivate} from "./src/enums/nation_private";
-import {Region} from "./src/enums/region";
+import {RegionPublic} from "./src/enums/region_public";
 import {World} from "./src/enums/world";
 import {WorldAssembly} from "./src/enums/world_assembly";
 import {Cards} from "./src/enums/cards";
@@ -20,7 +20,7 @@ import {Mode} from "./src/enums/mode";
 export {
     NationPublic,
     NationPrivate,
-    Region,
+    RegionPublic,
     World,
     WorldAssembly,
     Cards,

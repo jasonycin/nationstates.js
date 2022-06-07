@@ -1,4 +1,4 @@
-export enum Region {
+export enum RegionPublic {
     census = "census",
     censusranks = "censusranks",
     dbid = "dbid",
