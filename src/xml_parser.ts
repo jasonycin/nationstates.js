@@ -1,7 +1,7 @@
 import * as xml2js from 'xml2js';
 
 /**
- * @author The xmLParser is based on the following written by Auralia:
+ * @author The xmlParser is based on the following written by Auralia:
  * https://github.com/auralia/node-nsapi/blob/master/src/api.ts#L25
  * @hidden
  */
