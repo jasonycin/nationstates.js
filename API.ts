@@ -8,6 +8,7 @@ import {API, Client } from "./src/client";
 import {RequestBuilder} from "./src/request_builder/request_builder";
 import {PrivateRequestBuilder} from "./src/private_request_builder/private_request_builder";
 import {Nation} from "./src/nation/nation";
+import {Region} from "./src/region/region";
 import {NSMethods} from "./src/ns_methods/ns_methods";
 import {Meta} from "./src/enums/meta";
 import {Bulletin} from "./src/enums/bulletin";
@@ -29,6 +30,7 @@ export {
     RequestBuilder,
     PrivateRequestBuilder,
     Nation,
+    Region,
     NSMethods,
     Meta,
     Bulletin,
