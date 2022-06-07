@@ -2,7 +2,7 @@
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
 
 # NationStates.js | API Wrapper
-### Version: 0.4.4 | [📖 Documentation](https://heaveria-ns.github.io/nationstates.js/)
+### Version: 1.0.0 | [📖 Documentation](https://heaveria-ns.github.io/nationstates.js/)
 
 NationsStates.js is a **wrapper** to ease accessing the NationStates API through **method-chaining** and other abstractions. 
 Additional **built-in methods for common tasks** are also included.
@@ -13,7 +13,7 @@ This wrapper takes care of enforcing the rate limit, conversions to JS objects, 
 |-----|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ✅   | Rate limit                        | Built-in to 650ms. Can be raised, but **not** lowered.                                                                                                                                                          |
 | ✅   | Dumps                             | Support for easily downloading, unzipping, and converting to JSON. See [NSMethods](#nsmethods) and the [documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html#downloadDumpAsync). |
-| ✅   | Nations API                       | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
+| ✅   | Nations API                       | See [Nation](#nation). Alternative: [RequestBuilder](#requestbuilder).                                                                                                                                          |
 | ✅   | Regions API                       | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
 | ✅   | World API                         | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
 | ✅   | World Assembly API                | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
@@ -33,8 +33,9 @@ npm i nationstates.js
 ```
 
 ### 2. Import/Require the library
+
 ```TypeScript
-// For TypeScript, you should use the following import statement (Recommended):
+// For TypeScript, you can use the following import statement (Recommended):
 import * as ns from 'nationstates.js/API';
 
 // For standard JavaScript:
@@ -44,48 +45,46 @@ const ns = require('nationstates.js');
 ### 3. Initialize
 ```TypeScript
 /**
- * 1. Instantiate a API object.
+ * 1. Instantiate a Client object.
  * TODO: Ensure to replace the user-agent. This is usually the name of your own nation.
  *       This allows NationStates servers to recognize you.
  */
-const api = new ns.API('user-Agent');
+const client = new ns.Client('user-Agent');
 ```
+
+## Nation
+➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/Nation.html)
+
+You can create a newAll public shards for a nation are fetched and stored in a returned `Promise<NationResult>` 
+after awaiting `init()`.
+### Example:
+```TypeScript
+const nation = await new ns.Nation(client, 'nationName').init();
+console.log(nation.happenings, nation.population); // Whatever shard you want!
+```
+
 
 ## RequestBuilder
 ➡ [Documentation](https://heaveria-ns.github.io/nationstates.js/classes/RequestBuilder.html)  
 ➡ For private shards use [PrivateRequestBuilder](#privaterequestbuilder).
-### Usage Example:
+### Example:
 In this example, we will get Testlandia's flag and population as a JS object.
 #### 1. Instantiate Object
 ```TypeScript
-const req1 = new ns.RequestBuilder(api);
+const req = new ns.RequestBuilder(client);
 ```
 
 #### 2. Build and send the request.
 ```TypeScript
-/**
- * HTTPS requests are asychronous in nature so we must wrap the request
- * in an async function in order to "await" the response.
- */
-async function doStuff() {
-    /**
-     * Since we are getting Testlandia's flag and population we must:
-     * Add the nation and shards to the request.
-     */
-    await req1.addNation('testlandia')
-              .addShards(['flag', 'population'])
-              // Now the request has been built to our specifications, we can send it.
-              .sendRequestAsync();
-    
-    // Await the conversion and then log the javascript object.
-    console.log((await req1.convertToJSAsync()).js);
-}
+await req.addNation('testlandia') // nation=testlandia
+         .addShards(['flag', 'population']) // q=flag+population
+         .sendRequestAsync(); // Asynchronously execute the request.
 
-// Don't forget to call the async function.
-doStuff();
+// Convert the result to a JS object (optional).
+const json = await req.convertToJSAsync();
 ```
 ### 3. See the result!
-You are responsible for traversing the result. This is approximately what the raw response will look like:
+You are responsible for traversing the result. This is approximately what the json response will look like:
 ```JSON
 {
   "id": "testlandia",
@@ -94,11 +93,9 @@ You are responsible for traversing the result. This is approximately what the ra
 }
 ```
 ```TypeScript
-// Get full JS Object response.
-console.log(req1.js) // See above
-// Traverse the response. Dot notation also works.
-console.log(req1.js['flag']); // https://www.nationstates.net/images/flags/Iran.svg
-console.log(req1.js['population']); // 39561
+console.log(json) // See above
+console.log(json['flag']); // https://www.nationstates.net/images/flags/Iran.svg
+console.log(json['population']); // 39561
 ```
 
 ## PrivateRequestBuilder
@@ -110,7 +107,7 @@ But in order to send any request, you must **first authenticate()**
 in order to get the x-pin and allow for quick repeated requests:
 
 ```TypeScript
-const privReq = new ns.PrivateRequestBuilder(api);
+const privReq = new ns.PrivateRequestBuilder(client);
 // You must authenticate. This retrieves the x-pin and allows for quick repeated requests.
 await privReq.authenticate('nation', 'password')
 ```
@@ -127,9 +124,9 @@ await privReq.authenticate('nation', 'password')
 | `downloadDumpAsync(type, directory, options?)` | Download data dumps. For options, see [IDumpOptions](https://heaveria-ns.github.io/nationstates.js/interfaces/DumpOptions.html).                                   |
 | `isEndorsing(nation1, nation2)`                | Verifies if `nation1` is endorsing `nation2`. Returns a boolean.                                                                                                   |
 
-### Usage Example:
+### Example:
 ```TypeScript
-const nsFun = new ns.NSMethods(api);
+const nsFun = new ns.NSMethods(client);
 
 let endoResult = await nsFun.isEndorsing('Testlandia', 'Olvaria'); // Is Testlandia endorsing Olvaria?
 
@@ -144,7 +141,7 @@ Enumerators have also been provided for `mode`, `category`, `subcategory` for ea
 Here are some examples:
 #### 1. Adding a dispatch
 ```TypeScript
-await new ns.Dispatch(api, 'nation', 'password', ns.Mode.add) 
+await new ns.Dispatch(client, 'nation', 'password', ns.Mode.add) 
     .title('Cool Title!')
     .text('Hello World!')
     .category(ns.Category.factbook)
@@ -154,14 +151,14 @@ await new ns.Dispatch(api, 'nation', 'password', ns.Mode.add)
 
 #### 2. Removing a dispatch
 ```TypeScript
-await new ns.Dispatch(api, 'nation', 'password', ns.Mode.remove)
+await new ns.Dispatch(client, 'nation', 'password', ns.Mode.remove)
     .dispatchID(12345)
     .executeAsync();
 ```
 
 #### 3. Editing a dispatch
 ```TypeScript
-await new ns.Dispatch(api, 'nation', 'password', ns.Mode.edit)
+await new ns.Dispatch(client, 'nation', 'password', ns.Mode.edit)
     .dispatchID(1630710)
     .title('Edited Title')
     .text('Hello World!')
@@ -188,7 +185,7 @@ finds all require() statements and bundles them together in a `browser.js` file.
 6. The following should now work in the browser:
 ```HTML
 <script src="browser.js">
-    const api = ns.API('user-agent');
+    const api = ns.Client('user-agent');
     // Rest of your script here...
 </script>
 ```
