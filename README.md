@@ -1,10 +1,10 @@
 | [![CodeQL](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/heaveria-ns/nationstates.js/actions/workflows/codeql-analysis.yml) | ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) | ![IntelliJJ IDEA](https://img.shields.io/badge/IntelliJIDEA-000000.svg?style=for-the-badge&logo=intellij-idea&logoColor=white) | ![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white) |
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
 
-# NationStates.js | API Wrapper
+# NationStates.js | client Wrapper
 ### Version: 1.0.0 | [📖 Documentation](https://heaveria-ns.github.io/nationstates.js/)
 
-NationsStates.js is a **wrapper** to ease accessing the NationStates API through **method-chaining** and other abstractions. 
+NationsStates.js is a **wrapper** to ease accessing the NationStates client through **method-chaining** and other abstractions. 
 Additional **built-in methods for common tasks** are also included.
 
 This wrapper takes care of enforcing the rate limit, conversions to JS objects, and allowing usage of async/await.
@@ -13,13 +13,13 @@ This wrapper takes care of enforcing the rate limit, conversions to JS objects, 
 |-----|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ✅   | Rate limit                        | Built-in to 650ms. Can be raised, but **not** lowered.                                                                                                                                                          |
 | ✅   | Dumps                             | Support for easily downloading, unzipping, and converting to JSON. See [NSMethods](#nsmethods) and the [documentation](https://heaveria-ns.github.io/nationstates.js/classes/NSMethods.html#downloadDumpAsync). |
-| ✅   | Nations API                       | See [Nation](#nation) (recommended) or [RequestBuilder](#requestbuilder)                                                                                                                                        |
-| ✅   | Regions API                       | See [Region](#region) (recommended) or [RequestBuilder](#requestbuilder)                                                                                                                                        |
-| ✅   | World API                         | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
-| ✅   | World Assembly API                | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
+| ✅   | Nations client                       | See [Nation](#nation) (recommended) or [RequestBuilder](#requestbuilder)                                                                                                                                        |
+| ✅   | Regions client                       | See [Region](#region) (recommended) or [RequestBuilder](#requestbuilder)                                                                                                                                        |
+| ✅   | World client                         | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
+| ✅   | World Assembly client                | See [RequestBuilder](#requestbuilder).                                                                                                                                                                          |
 | ❌   | Telegrams                         | Future support planned.                                                                                                                                                                                         |
-| 🟡  | Trading Cards API                 | See [RequestBuilder](#requestbuilder). Requires use of [addCustomParam](https://heaveria-ns.github.io/nationstates.js/classes/RequestBuilder.html#addCustomParam).                                              |
-| ✅   | Verification API                  | Built-in functions to simplify process. No support for site-specific tokens. Use [NSMethods](#nsmethods) (recommended) or  [RequestBuilder](#requestbuilder).                                                   |
+| 🟡  | Trading Cards client                 | See [RequestBuilder](#requestbuilder). Requires use of [addCustomParam](https://heaveria-ns.github.io/nationstates.js/classes/RequestBuilder.html#addCustomParam).                                              |
+| ✅   | Verification client                  | Built-in functions to simplify process. No support for site-specific tokens. Use [NSMethods](#nsmethods) (recommended) or  [RequestBuilder](#requestbuilder).                                                   |
 | ✅   | Private shards                    | See [PrivateRequestBuilder](#privaterequestbuilder).                                                                                                                                                            |
 | 🟡  | Private commands                  | See [Dispatches](#dispatches). No support for `issues` or `giftcards`.                                                                                                                                          |
 | ✅   | Built-in methods for common tasks | See [NSMethods](#nsmethods).                                                                                                                                                                                    |
@@ -36,7 +36,7 @@ npm i nationstates.js
 
 ```TypeScript
 // For TypeScript, you can use the following import statement (Recommended):
-import * as ns from 'nationstates.js/API';
+import * as ns from 'nationstates.js/client';
 
 // For standard JavaScript:
 const ns = require('nationstates.js');
@@ -89,10 +89,10 @@ const req = new ns.RequestBuilder(client);
 ```TypeScript
 await req.addNation('testlandia') // nation=testlandia
          .addShards(['flag', 'population']) // q=flag+population
-         .sendRequestAsync(); // Asynchronously execute the request.
+         .execute(); // Asynchronously execute the request.
 
 // Convert the result to a JS object (optional).
-const json = await req.convertToJSAsync();
+const json = await req.toJS();
 ```
 ### 3. See the result!
 You are responsible for traversing the result. This is approximately what the json response will look like:
@@ -147,7 +147,7 @@ console.log(endoResult) // 0
 ## Private Commands
 ➡ [Dispatch Documentation](https://heaveria-ns.github.io/nationstates.js/classes/Dispatch.html)
 ### Dispatches
-An easy way to interact with the NationStates Private Commands and add, remove, or edit dispatches in a highl-level way.
+An easy way to interact with the NationStates Private Commands and add, remove, or edit dispatches in a high-level way.
 Enumerators have also been provided for `mode`, `category`, `subcategory` for ease of use.
 Here are some examples:
 #### 1. Adding a dispatch
@@ -157,14 +157,14 @@ await new ns.Dispatch(client, 'nation', 'password', ns.Mode.add)
     .text('Hello World!')
     .category(ns.Category.factbook)
     .subcategory(ns.Factbook.legislation)
-    .executeAsync();
+    .execute();
 ```
 
 #### 2. Removing a dispatch
 ```TypeScript
 await new ns.Dispatch(client, 'nation', 'password', ns.Mode.remove)
     .dispatchID(12345)
-    .executeAsync();
+    .execute();
 ```
 
 #### 3. Editing a dispatch
@@ -175,7 +175,15 @@ await new ns.Dispatch(client, 'nation', 'password', ns.Mode.edit)
     .text('Hello World!')
     .category(ns.Category.bulletin)
     .subcategory(ns.Bulletin.news)
-    .executeAsync();
+    .execute();
+```
+
+#### 4. Check for success/failure
+```TypeScript
+const result = await new ns.Dispatch(client, 'nation', 'password', ns.Mode.remove)
+    .dispatchID(12345)
+    .execute();
+console.log(result.response.statusBool, result.response.statusCode, result.response.body);
 ```
 
 ⚠️ There is no support for `issue` or `giftcard` private commands.
@@ -202,7 +210,7 @@ finds all require() statements and bundles them together in a `browser.js` file.
 ```
 
 ## Contact / Questions
-If you've encountered any issue, have feature requests, or need support using this API please feel free to reach
+If you've encountered any issue, have feature requests, or need support using this client please feel free to reach
 out to me at anytime! Preferably on Discord at Heaveria#6413. Otherwise, send me a telegram.
 
 Cheers,  

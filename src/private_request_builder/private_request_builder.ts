@@ -1,8 +1,9 @@
 import {API, Client} from "../client";
 import {RequestBuilder} from "../request_builder/request_builder";
+const fetch = require('node-fetch');
 
 /**
- * Extends the RequestBuilder to allow authenticating with the NS API and accessing private shards.
+ * Extends the RequestBuilder to allow authenticating with the NS client and accessing private shards.
  * No support for accessing private commands. Only shards.
  * @example const request = new PrivateRequestBuilder(api).authenticate('Testlandia', 'password');
  */
@@ -30,39 +31,23 @@ export class PrivateRequestBuilder extends RequestBuilder {
      * @param {string} password The password for the nation.
      */
     public async authenticate(nation: string, password: string): Promise<PrivateRequestBuilder> {
-        // Set nation and password in authentication object, so that if the x-pin expires it can be re-retrieved.
         this._authentication._nation = nation;
         this._authentication._xPassword = password;
-
-        // By using a seperate request builder, we avoid messing with the defined URL.
-        const req = new PrivateRequestBuilder(this.API).addNation(nation).addShards('unread');
-
-        // Check rate limit
+        const req = new PrivateRequestBuilder(this.client).addNation(nation).addShards('unread');
         await this.execRateLimit();
-
-        // Send request with a x-password header set.
         try {
             let res = await fetch(req.href, {
                 headers: {
-                    'User-Agent': this.API.userAgent,
+                    'User-Agent': this.client.userAgent,
                     'X-Password': password
                 }
             });
-
-            // Log request and update rate limit.
             await this.logRequest(res);
-
-            // Return the x-pin header.
             this._authentication._xPin = res.headers.get('x-pin');
             this._authentication.status = true;
-
-            // Error handling.
         } catch (err) {
-            // Throw error.
             throw new Error(err);
         }
-
-        // Method chaining.
         return this;
     }
 
@@ -71,33 +56,23 @@ export class PrivateRequestBuilder extends RequestBuilder {
      * Retrieve after awaiting it via .response, .body, or convert it to a JS object with convertToJSON();
      * Polymorph of RequestBuilder.
      */
-    public async sendRequestAsync(): Promise<PrivateRequestBuilder> {
-        // Verifies that the authentication object is set.
+    public async execute(): Promise<PrivateRequestBuilder> {
         if (!this._authentication.status) {
             throw new Error('You must first authenticate! Run authenticate() on your private request before sending it.')
         }
 
-        // Check rate limit.
         await this.execRateLimit();
-
-        // Send request
         try {
-            // Send request.
             const res = await fetch(this.href, {
                 headers: {
-                    'User-Agent': this.API.userAgent,
+                    'User-Agent': this.client.userAgent,
                     'X-Pin': this._authentication._xPin,
                 }
             });
-
-            // Log request and update rate limit.
             await this.logRequest(res);
-
         } catch (err) {
             throw new Error(`Error sending request: ${err}`);
         }
-
-        // Method chaining
         return this;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Defines the structure of the _authentication object in the API class.
+ * Defines the structure of the _authentication object in the client class.
  * @interface
  */
 interface Auth {

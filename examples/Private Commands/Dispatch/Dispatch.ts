@@ -3,7 +3,7 @@
  */
 import {Client, Bulletin, Category, Dispatch, Factbook, Mode} from "../../../API";
 
-// Instantiate one API object to ensure rate limit and user agent is set correctly.
+// Instantiate one client object to ensure rate limit and user agent is set correctly.
 const client = new Client('user-agent');
 
 examples();
@@ -18,14 +18,14 @@ async function examples() {
         .text('Hello World!')
         .category(Category.factbook)
         .subcategory(Factbook.legislation)
-        .executeAsync();
+        .execute();
 
     /**
      * Example 2: Removing a dispatch
      */
     await new Dispatch(client, 'nation', 'password', Mode.remove)
         .dispatchID(12345)
-        .executeAsync();
+        .execute();
 
     /**
      * Example 3: Editing a dispatch
@@ -36,5 +36,5 @@ async function examples() {
         .text('Hello World!')
         .category(Category.bulletin)
         .subcategory(Bulletin.news)
-        .executeAsync();
+        .execute();
 }

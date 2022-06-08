@@ -4,7 +4,7 @@
 
 import {Client, NationPrivate, PrivateRequestBuilder} from "../../API";
 
-// Instantiate one API object to ensure rate limit and user agent is set correctly.
+// Instantiate one client object to ensure rate limit and user agent is set correctly.
 const client = new Client('user-agent');
 
 examples();
@@ -30,10 +30,10 @@ async function examples() {
 
 
     // Await request
-    await request.sendRequestAsync();
+    await request.execute();
 
     // Convert request to JS object (use firstRequest.body to get original XML response body)
-    await request.convertToJSAsync();
+    await request.toJS();
 
     console.log(request.js['issues'], request.js['nextissue']);
 }

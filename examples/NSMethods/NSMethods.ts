@@ -4,7 +4,7 @@
 
 import {Client, NSMethods} from "../../API";
 
-// Instantiate one API object to ensure rate limit and user agent is set correctly.
+// Instantiate one client object to ensure rate limit and user agent is set correctly.
 const client = new Client('user-agent');
 
 examples();
@@ -12,7 +12,7 @@ examples();
 /* ---- Examples ---- */
 async function examples() {
     /**
-     * Example 1: Verify a nation using the verification API.
+     * Example 1: Verify a nation using the verification client.
      * verify(nation1, nation2)
      */
     const verifyNation = await new NSMethods(client).verify('testlandia', 'KL5JiTq5iMnd3i8NgNloAmPcOEZwCwQ0ogRcIA_dC_s')
@@ -20,7 +20,7 @@ async function examples() {
     console.log(verifyNation); // 0 or 1
 
     /**
-     * Example 2: Verify a nation using the verification API. This time, we will add generate and add a site-specific token.
+     * Example 2: Verify a nation using the verification client. This time, we will add generate and add a site-specific token.
      * verify(nation1, nation2, siteSpecificToken?)
      */
     const randomToken = Math.random().toString(36).slice(2) // Use your own preferred method.

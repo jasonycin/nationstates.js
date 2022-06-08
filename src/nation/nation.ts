@@ -13,8 +13,8 @@ export class Nation {
     }
 
     public async init(): Promise<NationResult> {
-        await this.request.sendRequestAsync();
-        await this.request.convertToJSAsync();
+        await this.request.execute();
+        await this.request.toJS();
         console.log(this.request.js);
         return new NationResult(this.request.js);
     }

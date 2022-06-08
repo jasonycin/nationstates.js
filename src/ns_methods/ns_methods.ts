@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as zlib from "zlib";
 // Node-fetch v.2.6.5. Still supported by developers.
 import fetch from 'node-fetch';
+import {parseXml} from "../xml_parser";
 
 /**
  * Defines the options for downloading dumps and what to do with them.
@@ -19,7 +20,7 @@ export interface IDumpOptions {
  * As opposed to building requests manually, this class has built-in methods for easily accessing and handling
  * common information one looks for. You do not build, send, or parse requests manually.
  * @example const methods = new NSMethods(api);
- * @param { API } API The API object to enforce rate limiting and user agents.
+ * @param { API } client The client object to enforce rate limiting and user agents.
  */
 export class NSMethods extends RequestBuilder {
     constructor(api: API | Client) {
@@ -41,16 +42,16 @@ export class NSMethods extends RequestBuilder {
         const r = await (await this
             .addNation(nation2.replace(/ /g, '_'))
             .addShards('endorsements')
-            .sendRequestAsync())
-            .convertToJSAsync();
+            .execute())
+            .toJS();
 
         // Uses RegExp to verify if nation1 is in commma-seperated list of endorsements and returns the boolean.
         return new RegExp('(?:^|,)' + nation1.replace(/ /g, '_') + '(?:,|$)').test(r.js['endorsements'])
     }
 
     /**
-     * Use the NS Verification API to verify the validity of a verification code.
-     * Returns either a 0 or 1 as a number, as described in the NS API documentation.
+     * Use the NS Verification client to verify the validity of a verification code.
+     * Returns either a 0 or 1 as a number, as described in the NS client documentation.
      * @example console.log(await methods.verify('Testlandia', '12345')); // 0
      * @param nation
      * @param checksum
@@ -73,15 +74,15 @@ export class NSMethods extends RequestBuilder {
         }
 
         // Get response
-        await this.sendRequestAsync();
+        await this.execute();
 
         // Return response as number.
-        return parseInt(this._response.body);
+        return parseInt(this.response.body);
     }
 
 
     /**
-     * Download the nation data dump from the API.
+     * Download the nation data dump from the client.
      * Note that it can take a while to download the dump, especially for nations or when converting to JSON.
      * Future feature: Decode utf-8 within the dump.
      * @example methods.downloadDump('Testlandia', {extract: true, deleteXMLGz: true, deleteXML: true, convertToJson: true}); // Returns just a .json file
@@ -105,10 +106,10 @@ export class NSMethods extends RequestBuilder {
             // Check rate limit.
             await this.execRateLimit();
 
-            // Request the file from the NationStates API.
+            // Request the file from the NationStates client.
             const res = await fetch(`https://www.nationstates.net/pages/${type}.xml.gz`, {
                 headers: {
-                    'User-Agent': this.API.userAgent
+                    'User-Agent': this.client.userAgent
                 }
             });
 
@@ -173,7 +174,7 @@ export class NSMethods extends RequestBuilder {
         // Create JSON file
         const json = fs.createWriteStream(savePath);
         // Write JSON to file
-        json.write(JSON.stringify(await this.parseXml(xml)));
+        json.write(JSON.stringify(await parseXml(xml)));
 
         // Method Chaining
         return this;

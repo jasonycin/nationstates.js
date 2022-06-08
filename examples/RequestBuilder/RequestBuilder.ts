@@ -4,7 +4,7 @@
 
 import { Client, NationPublic, RequestBuilder } from "../../API";
 
-// Instantiate one API object to ensure rate limit and user agent is set correctly.
+// Instantiate one client object to ensure rate limit and user agent is set correctly.
 const client = new Client('user-agent');
 
 examples();
@@ -25,10 +25,10 @@ async function examples() {
         .addShards([NationPublic.name, NationPublic.gdp, NationPublic.notables])
 
     // Await request
-    await request.sendRequestAsync();
+    await request.execute();
 
     // Convert request to JS object (use request.body to get original XML response body)
-    await request.convertToJSAsync();
+    await request.toJS();
 
     // Log results
     console.log(request.js['name'], request.js['gdp'], request.js['notables']['notable']);

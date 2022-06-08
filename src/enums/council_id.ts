@@ -1,5 +1,5 @@
 /**
- * Enumerator for the different WA API calls. See addCouncilID() for usage.
+ * Enumerator for the different WA client calls. See addCouncilID() for usage.
  */
 export enum CouncilID {
     GeneralAssembly = 1,

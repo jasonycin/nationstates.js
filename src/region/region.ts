@@ -13,8 +13,8 @@ export class Region {
     }
 
     public async init(): Promise<RegionResult> {
-        await this.request.sendRequestAsync();
-        await this.request.convertToJSAsync();
+        await this.request.execute();
+        await this.request.toJS();
         return new RegionResult(this.request.js);
     }
 }

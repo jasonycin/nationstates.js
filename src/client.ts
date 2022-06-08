@@ -1,7 +1,7 @@
 /**
  * ⚠️ Deprecated! Use Client instead.
  * Required for all other classes. Defines the configuration of the wrapper and is used to enforce rate limits and user agents.
- * @example const api = new API('Testlandia');
+ * @example const api = new client('Testlandia');
  */
 export class API {
     static readonly version: string = '1.0.0';

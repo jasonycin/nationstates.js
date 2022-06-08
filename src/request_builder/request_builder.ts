@@ -7,43 +7,47 @@ import {WorldAssembly} from "../enums/world_assembly";
 import {Cards} from "../enums/cards";
 import {IResponse} from "./interfaces/response";
 import {CouncilID} from "../enums/council_id";
-import {xmlParser} from "../xml_parser";
+import {parseXml} from "../xml_parser";
+const fetch = require('node-fetch');
 
 /**
  * Build a request to your specifications! Usage:
- * - (1) Define the architecture of a https request before it sent to the API.
+ * - (1) Define the architecture of a https request before it sent to the client.
  * - (2) Access and modify the response of a request.
- * @example const request = await new RequestBuilder(api).addNation('testlandia').sendRequestAsync();
+ * @example const request = await new RequestBuilder(api).addNation('testlandia').execute();
  * console.log(request.body);
- * @param {API} api - The API instance to use. Used to enforce the rate limit and user agent.
+ * @param {client} api - The client instance to use. Used to enforce the rate limit and user agent.
  */
 export class RequestBuilder {
-    protected API: Client;
+    protected client: Client;
     protected _urlObj: URL = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
     protected _shards: string[] = [];
-    protected _response: IResponse;
+    public response: IResponse;
 
     constructor(client: API | Client) {
+        /**
+         * client is deprecated. Use Client instead.
+         * TODO: Remove this in the future.
+         */
         if (client instanceof API) {
-            this.API = new Client(client.userAgent, client.rateLimit);
+            this.client = new Client(client.userAgent, client.rateLimit);
         } else if (client instanceof Client) {
-            this.API = client;
+            this.client = client;
         } else {
-            throw new Error('Invalid client. Must be an instance of API or Client. API is deprecated!')
+            throw new Error('Invalid client. Must be an instance of client or Client. client is deprecated!')
         }
-
     }
 
     /**
-     * Returns full node-fetch request and other meta-data created by the API wrapper.
+     * Returns full node-fetch request and other meta-data created by the client wrapper.
      * Typical usage would to analyze the request for any errors.
      * @example console.log(request.fetchResponse);
      */
     public get responseData(): IResponse {
         // Verify if response is undefined.
-        if (!this._response) throw new Error('No response found. Send a request first using sendRequestAsync()!')
+        if (!this.response) throw new Error('No response found. Send a request first using execute()!')
 
-        return this._response;
+        return this.response;
     }
 
     /**
@@ -52,11 +56,11 @@ export class RequestBuilder {
      */
     public get responseStatus(): IResponseStatus {
         // Verify if response is undefined.
-        if (!this._response) throw new Error('No response found. Send a request first using sendRequestAsync()!')
+        if (!this.response) throw new Error('No response found. Send a request first using execute()!')
 
         return {
-            code: this._response.statusCode,
-            bool: this._response.statusBool
+            code: this.response.statusCode,
+            bool: this.response.statusBool
         };
     }
 
@@ -67,10 +71,10 @@ export class RequestBuilder {
      */
     public get body(): string | number {
         // Verifies if a response has been received.
-        if (!this._response) throw new Error('No body found. Have you sent and awaited your request via sendRequestAsync()?')
+        if (!this.response) throw new Error('No body found. Have you sent and awaited your request via execute()?')
 
         // If the body is a number, convert the string to a number and return it, else return the body as is.
-        return !isNaN(this._response.body) ? parseInt(this._response.body) : this._response.body;
+        return !isNaN(this.response.body) ? parseInt(this.response.body) : this.response.body;
     }
 
     /**
@@ -81,9 +85,9 @@ export class RequestBuilder {
      */
     public get js(): object {
         // Verify if the response has been converted to js.
-        if (!this._response.js) throw new Error('No JSON found. Try convertToJSAsync() first and make sure a request has been sent.')
+        if (!this.response.js) throw new Error('No JSON found. Try toJS() first and make sure a request has been sent.')
 
-        return this._response.js;
+        return this.response.js;
     }
 
     /**
@@ -106,20 +110,12 @@ export class RequestBuilder {
      * Serves the purpose of ensuring proper URL encoding.
      */
     public get href(): string {
-        // Base url: https://www.nationstates.net/cgi-bin/api.cgi
-        let url = this._urlObj.origin + this._urlObj.pathname + '?';
-
-        // Unless a query string, encode the shards.
+        let url = this._urlObj.origin + this._urlObj.pathname + '?'; // https://www.nationstates.net/cgi-bin/api.cgi?.
         let params = [];
         this._urlObj.searchParams.forEach((value, key) => {
-            if (key === 'q') {
-                params.push(`${key}=${decodeURIComponent(value)}`);
-            } else {
-                params.push(`${key}=${encodeURIComponent(value)}`);
-            }
-        })
-
-        // Return the url with the shards, which had been formatted above.
+            if (key === 'q') params.push(`${key}=${decodeURIComponent(value)}`);
+            else params.push(`${key}=${encodeURIComponent(value)}`);
+        });
         return url + params.join('&');
     }
 
@@ -129,20 +125,13 @@ export class RequestBuilder {
      * @param name - The name of the nation from which data is retrieved.
      */
     public addNation(name: string): RequestBuilder {
-        if (// Minimum length
-            name.length < 3 ||
-            // Must be alphanumeric, or only alpha, or only numeric
-            !name.match(/^[\w\-\s]+$/) ||
-            // Last character cannot be a space
+        if (name.length < 3 ||
+            !name.match(/^[\w\-\s]+$/) || // Must be alphanumeric, or only alpha, or only numeric
             name.slice(-1) === ' ' ||
-            // Data type is string.
-            typeof (name) !== 'string')
+            typeof (name) !== 'string') {
             throw new Error(`You submitted an invalid nation name: ${name}`);
-
-        // Append nation to the url.
+        }
         this._urlObj.searchParams.append('nation', name);
-
-        // Method chaining.
         return this;
     }
 
@@ -152,10 +141,7 @@ export class RequestBuilder {
      * @param name
      */
     public addRegion(name: string): RequestBuilder {
-        // Append region to the url.
         this._urlObj.searchParams.append('region', name);
-
-        // Method chaining.
         return this;
     }
 
@@ -165,16 +151,9 @@ export class RequestBuilder {
      * @param id
      */
     public addCouncilID(id: CouncilID | number): RequestBuilder {
-        // Type-checking
         if (typeof (id) !== 'number') throw new Error(`You submitted an invalid council ID: ${id}. Must be a number.`);
-
-        // Verify if ID matches NationStates API specifications.
         if (id > 2 || id < 0) throw new Error('Invalid ID. 1 = GA, 2 = SC.')
-
-        // Append to URL.
         this._urlObj.searchParams.append('wa', id.toString());
-
-        // Method chaining.
         return this;
     }
 
@@ -184,13 +163,8 @@ export class RequestBuilder {
      * @param id
      */
     public addResolutionID(id: number): RequestBuilder {
-        // Type-checking
         if (typeof (id) !== 'number') throw new Error(`You submitted an invalid resolution ID: ${id}. Must be a number.`);
-
-        // Append to URL.
         this._urlObj.searchParams.append('id', id.toString());
-
-        // Method chaining.
         return this;
     }
 
@@ -202,30 +176,18 @@ export class RequestBuilder {
      */
     public addShards(shards: NationPublic | NationPrivate | RegionPublic | World | WorldAssembly | Cards | string | string[]): RequestBuilder {
         switch (typeof (shards)) {
-            // If only a single shard is given, push it to _shards[].
             case "string":
                 this._shards.push(shards);
                 break;
-
-            // If array of strings, then push each string to _shards[].
             case "object":
-                // Iterate over each shard.
-                for (let shard of shards)
-                    this._shards.push(shard);
+                shards.forEach(shard => this._shards.push(shard));
                 break;
-
-            // Error handling
             default:
                 throw new Error("Invalid type of _shards. Must be a string or an array of strings.");
         }
 
-        // Check if shards are already in the url. If yes, deletes them.
         if (this._urlObj.searchParams.has('q')) this._urlObj.searchParams.delete('q');
-
-        // Add shards[] to URL.
         this._urlObj.searchParams.append('q', this._shards.join('+'));
-
-        // Method chaining
         return this;
     }
 
@@ -236,10 +198,7 @@ export class RequestBuilder {
      * @param value
      */
     public addCustomParam(key: string, value: string | number) {
-        // Append key and value to the url.
         this._urlObj.searchParams.append(key.toString(), value.toString());
-
-        // Method chaining.
         return this;
     }
 
@@ -256,13 +215,9 @@ export class RequestBuilder {
      * Enforces the rate-limit by calculating time-to-wait and then waiting for the specified amount of time.
      */
     protected async execRateLimit(): Promise<void> {
-        // Get difference in milliseconds between the current date and the last request sent.
-        const difference: number = Date.now() - this.API.lastRequestMs;
-
-        // If the difference exceeds the rate limit, wait for the difference.
-        if (this.API.rateLimit > difference) {
-            // Calculate the time to wait.
-            const timeToWait: number = this.API.rateLimit - difference;
+        const difference: number = Date.now() - this.client.lastRequestMs;
+        if (this.client.rateLimit > difference) {
+            const timeToWait: number = this.client.rateLimit - difference;
             // Forcefully stop JavaScript execution.
             await new Promise(resolve => setTimeout(resolve, timeToWait));
         }
@@ -271,40 +226,37 @@ export class RequestBuilder {
     /**
      * Executes the request and saves the response to the RequestBuilder object.
      * Retrieve after awaiting it via .response, .body, or convert it to a JS object with convertToJSON();
-     * @example const req = await new RequestBuilder(api).addNation('Testlandia').sendRequestAsync()
+     * @example const req = await new RequestBuilder(api).addNation('Testlandia').execute()
      */
-    public async sendRequestAsync(): Promise<RequestBuilder> {
-        // Check rate limit.
+    public async execute(): Promise<RequestBuilder> {
         await this.execRateLimit();
-
         try {
-            // Send request.
             const res = await fetch(this.href, {
-                headers: {
-                    'User-Agent': this.API.userAgent,
-                }
+                headers: { 'User-Agent': this.client.userAgent }
             });
-            // Log request and update rate limit.
             await this.logRequest(res);
-
         } catch (err) {
             throw new Error(`Error sending request: ${err}`);
         }
-        // Method chaining
         return this;
     }
 
     /**
-     * Saves the node-fetch response to the _response object within the instance.
+     * ⚠️ Deprecated! Use execute() instead.
+     */
+    public async sendRequestAsync() {
+        console.log('WARNING: sendRequestAsync() is deprecated. Use execute() instead.');
+        await this.execute();
+    }
+
+    /**
+     * Saves the node-fetch response to the response object within the instance.
      * @param res
      * @protected
      */
     protected async logRequest(res): Promise<void> {
-        // Record the unix timestamp of the request for rate limiting.
-        this.API.lastRequestMs = Date.now();
-
-        // Handle IResponse
-        this._response = {
+        this.client.lastRequestMs = Date.now();
+        this.response = {
             fetchResponse: res,
             unixTime: Date.now(),
             statusCode: res.status,
@@ -313,38 +265,23 @@ export class RequestBuilder {
         }
     }
 
-    public async convertToJSAsync(): Promise<RequestBuilder> {
-        // Verifies if the a response has been set.
-        if (!this._response.body) throw new Error("No response body could be found. You can examine the response body by doing: ")
-
-        // Attempts to parse the XML into a JSON object.
+    public async toJS(): Promise<RequestBuilder> {
+        if (!this.response.body) throw new Error("No response body could be found. You can examine the response body by doing: ")
         try {
-            this._response.js = await this.parseXml(this._response.body);
+            this.response.js = await parseXml(this.response.body);
         }
         catch (err) {
             throw new Error(err);
         }
-
-        // Method chaining.
         return this;
     }
 
     /**
-     * Parses XML into a JSON object.
-     * @author The xmLParser is based on the following written by Auralia:
-     * https://github.com/auralia/node-nsapi/blob/master/src/api.ts#L25
-     * @param {string} xml The XML to parse.
-     * @return data promise returning a JSON object.
+     * ⚠️ Deprecated! Use execute() instead.
      */
-    protected parseXml(xml: string): Promise<object> {
-        return new Promise((resolve, reject) => {
-            xmlParser.parseString(xml, (err: any, data: any) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(data);
-            });
-        });
+    public async convertToJSAsync() {
+        console.log('WARNING: convertToJSAsync() is deprecated. Use execute() instead.');
+        await this.toJS();
     }
 
     /**
@@ -353,13 +290,8 @@ export class RequestBuilder {
      * @protected
      */
     protected resetURL(): RequestBuilder {
-        // Resets the URL to the default.
         this._urlObj = new URL('https://www.nationstates.net/cgi-bin/api.cgi');
-
-        // Empty the query string by overwriting the shards with an empty array.
         this._shards = [];
-
-        // Method chaining
         return this;
     }
 }
