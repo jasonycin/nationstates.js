@@ -21,7 +21,7 @@
     "node-fetch": "^2.6.5",
     "typedoc-plugin-missing-exports": "^0.22.6",
     "xml-to-json-stream": "^1.1.0",
-    "xml2js": "^0.4.23"
+    "xml2js": "^0.5.0"
   },
   "devDependencies": {
     "@types/node-fetch": "^3.0.3",
